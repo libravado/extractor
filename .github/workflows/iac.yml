@@ -1,0 +1,36 @@
+name: IaC Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Environment (dev|test|prod)
+        required: true
+        default: dev
+  push:
+    branches:
+    - main
+    paths:
+    - iac/main.bicep
+jobs:
+  deploy-iac:
+    runs-on: ubuntu-latest
+    env:
+      ENV_PREFIX: "${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}"
+    steps:
+    - uses: actions/checkout@v3
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_SCM_CREDS }}
+    - name: Upgrade AZ Bicep
+      run: az bicep upgrade
+    - name: Deploy Resource Module
+      uses: azure/arm-deploy@v1
+      with:
+        subscriptionId: ${{ secrets.AZURE_SUB_ID }}
+        resourceGroupName: "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}"
+        template: iac/main.bicep
+        parameters:
+          sqlConnection=blort-sql
+          appInsightsConnection=blort-ai
+          sourceStorageConnection=blort-source
+          targetStorageConnection=blort-target
