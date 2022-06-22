@@ -21,9 +21,9 @@ jobs:
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_SCM_CREDS }}
-    - name: Upgrade AZ Bicep
+    - name: Upgrade bicep
       run: az bicep upgrade
-    - name: Deploy Resource Module
+    - name: Deploy resources
       uses: azure/arm-deploy@v1
       with:
         subscriptionId: ${{ secrets.AZURE_SUB_ID }}
