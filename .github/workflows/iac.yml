@@ -32,5 +32,6 @@ jobs:
         parameters:
           sqlConnection=blort-sql
           appInsightsConnection=blort-ai
-          sourceStorageConnection=blort-source
-          targetStorageConnection=blort-target
+          sourceDocsStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
+          exportBlobStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
+          exportBlobContainerName=export
