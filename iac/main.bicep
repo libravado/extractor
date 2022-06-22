@@ -113,6 +113,8 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
   name: 'functionAppDeploy'
   params: {
     appServicePlanId: appServicePlanDeploy.outputs.resourceId
+    isFunctionApp: true
+    shortName: 'func'
     appSettings: [
       {
         name: 'ApplicationInsights__ConnectionString'
@@ -147,7 +149,6 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
         value: sqlConnection
       }
     ]
-    shortName: 'func'
     location: location
     prefix: prefix
     suffix: suffix

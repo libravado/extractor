@@ -7,6 +7,8 @@ on:
         required: true
         default: dev
   push:
+    branches:
+    - main
     paths:
     - source
 jobs:
@@ -16,3 +18,14 @@ jobs:
       ENV_PREFIX: "${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}"
     steps:
     - uses: actions/checkout@v3
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_SCM_CREDS }}
+    - name: Upgrade bicep
+      run: az bicep upgrade
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Publish app
+      run: |
+        dotnet publish ./source/ExtractorFunc -c Release -o '${{ github.workspace }}/published'
