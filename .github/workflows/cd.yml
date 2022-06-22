@@ -29,12 +29,12 @@ jobs:
     - name: Build app
       run: |
         dotnet build ./source/ExtractorFunc -c Release -o '${{ github.workspace }}/published'
-        pubProfile=$(az functionapp deployment list-publishing-profiles -g "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --query "[?publishMethod=='ZipDeploy'] | [0]")
-        echo "::add-mask::$pubProfile"
-        echo PUB_PROFILE=$pubProfile >> $GITHUB_ENV
+        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
+        echo "::add-mask::$pubProfileXml"
+        echo PUB_PROFILE_XML=$pubProfileXml >> $GITHUB_ENV
     - name: Publish func
       uses: Azure/functions-action@v1
       with:
         app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
         package: '${{ github.workspace }}/published'
-        publish-profile: ${{ env.PUB_PROFILE }}
+        publish-profile: ${{ env.PUB_PROFILE_XML }}
