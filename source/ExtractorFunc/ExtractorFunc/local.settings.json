@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "SourceDocsStorageAccountName": "???",
+    "ExportBlobStorageAccountName": "???",
+    "ExportBlobContainerName": "export",
+    //"TriggerBlobStorage__accountName": ""
+    "TriggerBlobStorage": "UseDevelopmentStorage=true"
+  },
+  "ConnectionStrings": {
+    "SourceDb": "raa"
+  }
+}

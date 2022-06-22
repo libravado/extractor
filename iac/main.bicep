@@ -147,7 +147,7 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
         value: sqlConnection
       }
     ]
-    shortName: 'docextract'
+    shortName: 'func'
     location: location
     prefix: prefix
     suffix: suffix

@@ -1,39 +1,45 @@
+using System;
 using System.IO;
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc
 {
     public class ExtractDocs
     {
-        private const string SourceStorageConnectionKey = "SourceStorageAccount";
-        private const string TargetStorageConnectionKey = "TargetStorageAccount";
-        private const string TriggerStorageConnectionKey = "TriggerStorageAccount";
-        private const string SourceDocsContainerNameKey = "SourceDocsContainerName";
-        private const string TargetBlobContainerNameKey = "TargetBlobContainerName";
-        private const string TriggerContainerName = "trigger";
-
-        private readonly BlobContainerClient docsContainer;
+        private readonly BlobServiceClient sourceAccount;
         private readonly BlobContainerClient exportContainer;
+        private readonly ILogger<ExtractDocs> logger;
 
-        public ExtractDocs(IConfiguration config)
+        public ExtractDocs(IConfiguration config, IHostingEnvironment env, ILogger<ExtractDocs> logger)
         {
-            var sourceConnection = config.GetConnectionString(SourceStorageConnectionKey);
-            var targetConnection = config.GetConnectionString(TargetStorageConnectionKey);
+            this.logger = logger;
 
-            docsContainer = new(sourceConnection, config[SourceDocsContainerNameKey]);
-            exportContainer = new(targetConnection, config[TargetBlobContainerNameKey]);
+            if (env.IsDevelopment())
+            {
+                sourceAccount = new("UseDevelopmentStorage=true");
+                exportContainer = new("UseDevelopmentStorage=true", config["ExportBlobContainerName"]);
+            }
+            else
+            {
+                sourceAccount = new(
+                    new Uri($"https://{config["SourceDocsStorageAccountName"]}.blob.core.windows.net"),
+                    new DefaultAzureCredential());
+                exportContainer = new(
+                    new Uri($"https://{config["ExportBlobStorageAccountName"]}.blob.core.windows.net/{config["ExportBlobContainerName"]}"),
+                    new DefaultAzureCredential());
+            }
 
-            docsContainer.CreateIfNotExists();
             exportContainer.CreateIfNotExists();
         }
 
         [FunctionName("ExtractDocs")]
         public void Run(
-            [BlobTrigger($"{TriggerContainerName}/{{name}}", Connection = TriggerStorageConnectionKey)]Stream myBlob,
-            ILogger logger)
+            [BlobTrigger("trigger/{name}", Connection = "TriggerBlobStorage")]Stream myBlob)
         {
             logger.LogInformation($"C# Blob trigger function Processed blob\n Size: {myBlob.Length} Bytes");
         }
