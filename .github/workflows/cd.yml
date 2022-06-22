@@ -28,4 +28,6 @@ jobs:
         dotnet-version: 6.0.x
     - name: Publish app
       run: |
+        pubProfile=$(az functionapp deployment list-publishing-profiles -g "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --query "[?publishMethod=='ZipDeploy'] | [0]")
+        echo $pubProfile
         dotnet publish ./source/ExtractorFunc -c Release -o '${{ github.workspace }}/published'
