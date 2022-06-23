@@ -28,6 +28,16 @@ namespace ExtractorFunc
         /// <param name="env">The environment.</param>
         public ExtractDocs(IConfiguration config, IHostingEnvironment env)
         {
+            /*
+            
+            TODO!:
+              - Dont plan exceptions; return failure reason / bool / copyresult object, etc instead
+              - Export/runs... produce a SINGLE result file in a flat folder
+              - Handle global errors and write out result file accordingly
+              - Handle when the query produces 0 results!
+
+            */
+
             localTimestamp = DateTime.Now;
             logPrefix = $"Extract {localTimestamp.Ticks}";
             sourceDbConnection = config.GetConnectionString("SourceDb");
