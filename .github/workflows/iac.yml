@@ -31,7 +31,7 @@ jobs:
         template: iac/main.bicep
         parameters:
           sqlConnection=blort-sql
-          appInsightsConnection=blort-ai
+          appInsightsConnection=${{ secrets.AZURE_INSIGHTS }}
           sourceDocsStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
           exportBlobStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
           exportBlobContainerName=export

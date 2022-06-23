@@ -126,3 +126,12 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
     tags: tags
   }
 }
+
+// module functionAppBlobContributorRoleDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/security/sp-assign-sub-role:v1' = {
+//   name: 'functionAppBlobContributorRoleDeploy'
+//   scope: subscription()
+//   properties: {
+//     principalId: functionAppDeploy.outputs.resourcePrincipalId
+//     role: 'Storage Blob Data Contributor'
+//   }
+// }

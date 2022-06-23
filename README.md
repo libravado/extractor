@@ -27,6 +27,7 @@ $acrId=az acr show -n "$($cloudenv)acrsharedweu" -g "$($cloudenv)-rg-shared-weu"
 $scmRgContrib=az role assignment create --assignee-object-id $scmSpId --assignee-principal-type ServicePrincipal --role contributor --scope $rgId --only-show-errors; `
 $scmAcrPuller=az role assignment create --assignee-object-id $scmSpId --assignee-principal-type ServicePrincipal --role acrpull --scope $acrId --only-show-errors; `
 $engAdId=az ad group create --display-name engineers --mail-nickname engineers --only-show-errors --query id -o tsv; `
+$appiConnection=az resource show -g "$($cloudenv)-rg-shared-weu" -n "$($cloudenv)-appi-shared-weu" --resource-type "microsoft.insights/components" --query properties.ConnectionString -o tsv; `
 
 echo "--------------------------------------------------------------------------------"; `
 echo "AZURE_WORKLOAD:   $workload"; `
@@ -34,6 +35,7 @@ echo "AZURE_RG_LOC:     $locationShort"; `
 echo "AZURE_ENG_ID:     $engAdId"; `
 echo "AZURE_SUB_ID:     $subId"; `
 echo "AZURE_SCM_ID:     $scmSpId"; `
+echo "AZURE_INSIGHTS:   $appiConnection"; `
 if ( $scmCreds ) { echo "AZURE_SCM_CREDS:" $scmCreds; } `
 echo "--------------------------------------------------------------------------------";
 
