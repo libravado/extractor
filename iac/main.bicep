@@ -145,6 +145,10 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
       //   value: cosmosAccountDeploy.outputs.cosmosConnection
       // }
       {
+        name: 'WEBSITE_RUN_FROM_PACKAGE'
+        value: 1
+      }
+      {
         name: 'ConnectionStrings__SourceDb'
         value: sqlConnection
       }
