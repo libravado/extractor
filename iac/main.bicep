@@ -56,7 +56,7 @@ module triggerBlobStorageAccountDeploy 'br:devacrsharedweu.azurecr.io/bicep/modu
 module triggerBlobStorageContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account-blob:v1' = {
   name: 'triggerBlobStorageContainerDeploy'
   params: {
-    containerName: 'trigger'
+    containerName: 'wns-data-extract-trigger'
     publicAccess: true
     storageAccountResourceName: triggerBlobStorageAccountDeploy.outputs.resourceName
   }
