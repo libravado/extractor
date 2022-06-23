@@ -7,6 +7,6 @@
     "TriggerBlobStorage": "UseDevelopmentStorage=true"
   },
   "ConnectionStrings": {
-    "SourceDb": "raa"
+    "SourceDb": "Server=tcp:sboxsqlsharedinfrauks.database.windows.net,1433;Initial Catalog=sourcedatadb;Persist Security Info=False;User ID=sboxsqlsharedadmin;Password=Adkupegy!16;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   }
 }

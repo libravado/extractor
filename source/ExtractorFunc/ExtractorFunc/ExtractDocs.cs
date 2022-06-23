@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Storage.Blobs;
 using ExtractorFunc.Helpers;
 using Microsoft.Azure.WebJobs;
@@ -8,9 +7,12 @@ using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc
 {
+    /// <summary>
+    /// Extracts source documents into a separate container, based on filter parameters
+    /// that are delivered within the contents of a blob trigger file.
+    /// </summary>
     public class ExtractDocs
     {
-        private const string ExportBlobFormat = "practice-{0}/{1}/claim-{2}/{3}/{4}";
         private const string TriggerContainerName = "wns-data-extract-trigger";
 
         private readonly string sourceDbConnection;
@@ -19,10 +21,15 @@ namespace ExtractorFunc
         private readonly DateTime localTimestamp;
         private readonly string logPrefix;
 
+        /// <summary>
+        /// Initialises a new instance of the <see cref="ExtractDocs"/> class.
+        /// </summary>
+        /// <param name="config">The configuration.</param>
+        /// <param name="env">The environment.</param>
         public ExtractDocs(IConfiguration config, IHostingEnvironment env)
         {
             localTimestamp = DateTime.Now;
-            logPrefix = $"Extract {localTimestamp.Ticks}: ";
+            logPrefix = $"Extract {localTimestamp.Ticks}";
             sourceDbConnection = config.GetConnectionString("SourceDb");
 
             if (env.IsDevelopment())
@@ -41,12 +48,50 @@ namespace ExtractorFunc
             exportContainer.CreateIfNotExists();
         }
 
+        /// <summary>
+        /// Executes the function.
+        /// </summary>
+        /// <param name="triggerFile">The trigger file.</param>
+        /// <param name="triggerFileName">The trigger file name.</param>
+        /// <param name="logger">The logger.</param>
         [FunctionName("ExtractDocs")]
-        public void Run(
-            [BlobTrigger($"{TriggerContainerName}/{{name}}", Connection = "TriggerBlobStorage")] Stream myBlob,
+        public async Task Run(
+            [BlobTrigger($"{TriggerContainerName}/{{triggerFileName}}", Connection = "TriggerBlobStorage")] Stream triggerFile,
+            string triggerFileName,
             ILogger logger)
         {
-            logger.LogInformation($"C# Blob trigger function Processed blob\n Size: {myBlob.Length} Bytes");
+            logger.LogInformation($"{logPrefix}: START");
+
+            var runConfig = TriggerParser.ReadTriggerConfig(triggerFile, triggerFileName);
+            var documents = SqlHelper.GatherDocumentData(sourceDbConnection, runConfig);
+            var documentCount = documents.Count;
+
+            logger.LogInformation($"{logPrefix}: Source documents found: {documentCount}");
+
+            using var queryDataStream = RunDataHelper.PrepareRunDataJson(localTimestamp, runConfig, new { documentCount, documents });
+            await exportContainer.UploadBlobAsync($"runs/{localTimestamp.Ticks}/querydata.json", queryDataStream);
+
+            var failedUris = new List<string>();
+            foreach (var document in documents)
+            {
+                try
+                {
+                    var source = document.ToSourceBlob(sourceAccount);
+                    var target = exportContainer.GetBlobClient(document.ToTargetPath());
+                    await BlobClientHelper.CopyBlobAsync(source, target);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, $"{logPrefix}: Failed to copy: {document.BlobUri}");
+                    failedUris.Add(document.BlobUri);
+                }
+            }
+
+            var failedUriCount = failedUris.Count;
+            using var resultsStream = RunDataHelper.PrepareRunDataJson(localTimestamp, runConfig, new { documentCount, failedUriCount, failedUris });
+            await exportContainer.UploadBlobAsync($"runs/{localTimestamp.Ticks}/results.json", resultsStream);
+
+            logger.LogInformation($"{logPrefix}: END");
         }
     }
 }

@@ -4,7 +4,7 @@ using ExtractorFunc.Models;
 
 namespace ExtractorFunc.Helpers;
 
-internal static class TriggerFileHelper
+internal static class TriggerParser
 {
     private const string CsvMatchesRegex = "\"[^\"]*\"|[^,\\s*]+";
 
