@@ -62,43 +62,6 @@ module triggerBlobStorageContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/mo
   }
 }
 
-// module cosmosAccountDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/database/cosmos-account:v1' = {
-//   name: 'cosmosAccountDeploy'
-//   params: {
-//     isServerless: true
-//     isZoneRedundant: false
-//     useFreeTier: true
-//     location: cosmosLocation
-//     prefix: prefix
-//     suffix: suffix
-//     tags: tags
-//   }
-// }
-
-// module cosmosSqlDbDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/database/cosmos-sqldb:v1' = {
-//   name: 'cosmosSqlDbDeploy'
-//   params: {
-//     cosmosAccountResourceName: cosmosAccountDeploy.outputs.resourceName
-//     databaseName: 'data-extract-db'
-//     location: cosmosLocation
-//     tags: tags
-//   }
-// }
-
-// module cosmosSqlDbExtractionContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/database/cosmos-sqldb-container:v1' = {
-//   name: 'cosmosSqlDbExtractionContainerDeploy'
-//   params: {
-//     containerName: 'extractions'
-//     cosmosSqlDbResourceName: '${cosmosAccountDeploy.outputs.resourceName}/${cosmosSqlDbDeploy.outputs.resourceName}'
-//     partitionKeys: [
-//       '/id'
-//     ]
-//     uniqueKeys: []
-//     location: cosmosLocation
-//     tags: tags
-//   }
-// }
-
 module appServicePlanDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-service-plan:v1' = {
   name: 'appServicePlanDeploy'
   params: {  
@@ -117,12 +80,24 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
     shortName: 'func'
     appSettings: [
       {
-        name: 'ApplicationInsights__ConnectionString'
+        name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
         value: appInsightsConnection
+      }
+      {
+        name: 'FUNCTIONS_EXTENSION_VERSION'
+        value: '~4'
       }
       {
         name: 'FUNCTIONS_WORKER_RUNTIME'
         value: 'dotnet'
+      }
+      {
+        name: 'WEBSITE_RUN_FROM_PACKAGE'
+        value: 1
+      }
+      {
+        name: 'AzureWebJobsStorage'
+        value: triggerBlobStorageAccountDeploy.outputs.primaryConnection
       }
       {
         name: 'SourceDocsStorageAccountName'
@@ -139,14 +114,6 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
       {
         name: 'TriggerBlobStorage__accountName'
         value: triggerBlobStorageAccountDeploy.outputs.resourceName
-      }
-      // {
-      //   name: 'ConnectionStrings__StateDatabase'
-      //   value: cosmosAccountDeploy.outputs.cosmosConnection
-      // }
-      {
-        name: 'WEBSITE_RUN_FROM_PACKAGE'
-        value: 1
       }
       {
         name: 'ConnectionStrings__SourceDb'

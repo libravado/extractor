@@ -1,0 +1,259 @@
+﻿using System.Data;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using Azure.Identity;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Pawtal.ExtractDocs.Func.Models;
+
+namespace Pawtal.ExtractDocs.Func;
+
+/// <summary>
+/// A function that extracts docs.
+/// </summary>
+public class ExtractDocsFunction
+{
+    private const string SourceDbConnectionKey = "SourceDb";
+    private const string SourceDocsStorageAccountNameKey = "SourceDocsStorageAccountName";
+    private const string ExportBlobStorageAccountNameKey = "ExportBlobStorageAccountName";
+    private const string TriggerBlobStorageConnectionKey = "TriggerBlobStorage";
+    private const string ExportBlobContainerNameKey = "ExportBlobContainerName";
+    private const string ExportBlobFormat = "practice-{0}/{1}/claim-{2}/{3}/{4}";
+    private const string TriggerContainerName = "wns-data-extract-trigger";
+    private const string CsvMatchesRegex = "\"[^\"]*\"|[^,\\s*]+";
+
+    private const string SqlParamDateFrom = "@ClaimsCreatedFrom";
+    private const string SqlParamDateTo = "@ClaimsCreatedTo";
+    private const string SqlParamPracticeIdsCsv = "@PracticeIdsCsv";
+    private const string SqlAliasPracticeId = "PracticeId";
+    private const string SqlAliasClaimId = "ClaimId";
+    private const string SqlAliasClaimType = "ClaimType";
+    private const string SqlAliasDocumentType = "DocumentType";
+    private const string SqlAliasBlobUri = "BlobUri";
+    private const string SourceDocSql = $@"
+drop table  if exists #pids
+select      value into #pids    from string_split({SqlParamPracticeIdsCsv}, ',')
+select      pp.practice_id      {SqlAliasPracticeId},
+            c.id                {SqlAliasClaimId},
+            c.type_id           {SqlAliasClaimType},
+            cu.type_id          {SqlAliasDocumentType},
+            cast (cu.BlobUri as varchar(512)) {SqlAliasBlobUri}
+from        practice_policies pp
+inner join  claims c            on pp.id = c.practice_policy_id
+inner join  claim_uploads cu    on c.id = cu.claim_id
+left join   #pids pid           on pp.practice_id = pid.value
+where       c.created_at        between {SqlParamDateFrom} and {SqlParamDateTo}
+and         {SqlParamPracticeIdsCsv} is null or pid.value is not null
+and         c.type_id           in (1, 2)
+";
+
+    private readonly string sourceDbConnection;
+    private readonly BlobServiceClient sourceBlobAccount;
+    private readonly BlobContainerClient exportContainer;
+    private readonly DateTime executionTimestamp;
+    private readonly string logPrefix;
+
+    /// <summary>
+    /// Initialises a new instance of the <see cref="ExtractDocsFunction"/> class.
+    /// </summary>
+    /// <param name="config">The configuration.</param>
+    /// <param name="env">The hosting environment.</param>
+    public ExtractDocsFunction(IConfiguration config, IHostingEnvironment env)
+    {
+        executionTimestamp = DateTime.Now;
+        logPrefix = $"Document Extract {executionTimestamp.Ticks}";
+        sourceDbConnection = config.GetConnectionString(SourceDbConnectionKey);
+
+        sourceBlobAccount = GetAccount(config[SourceDocsStorageAccountNameKey], env);
+        exportContainer = GetContainer(config[ExportBlobStorageAccountNameKey], config[ExportBlobContainerNameKey], env);
+        exportContainer.CreateIfNotExists();
+    }
+
+    /// <summary>
+    /// Runs the function.
+    /// </summary>
+    /// <param name="triggerFile">The trigger payload.</param>
+    /// <param name="triggerFileName">The trigger file name.</param>
+    /// <param name="logger">The logger.</param>
+    [FunctionName("ExtractDocs")]
+    public async Task Run(
+        [BlobTrigger($"{TriggerContainerName}/{{triggerFileName}}", Connection = TriggerBlobStorageConnectionKey)] Stream triggerFile,
+        string triggerFileName,
+        ILogger logger)
+    {
+        logger.LogInformation($"{logPrefix}: START!");
+
+        var runConfig = ReadParameters(triggerFile, triggerFileName);
+        var claimDocuments = ObtainDocumentData(runConfig);
+        var claimDocumentsCount = claimDocuments.Count();
+        await ExportRunDataAsync("querydata", runConfig, new { claimDocumentsCount, claimDocuments });
+        var failedUris = new List<string>();
+        foreach (var claimDocument in claimDocuments)
+        {
+            if (!await TryCopyDocumentBlobAsync(claimDocument, logger))
+            {
+                failedUris.Add(claimDocument.BlobUri);
+            }
+        }
+
+        await ExportRunDataAsync("results", runConfig, new { claimDocumentsCount, failedUrisCount = failedUris.Count, failedUris });
+    }
+
+    private static BlobServiceClient GetAccount(string storageAccountName, IHostingEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            return new("UseDevelopmentStorage=true");
+        }
+        else
+        {
+            var accountEndpoint = string.Format("https://{0}.blob.core.windows.net", storageAccountName);
+            return new(new Uri(accountEndpoint), new DefaultAzureCredential());
+        }
+    }
+
+    private static BlobContainerClient GetContainer(string storageAccountName, string containerName, IHostingEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            return new("UseDevelopmentStorage=true", containerName);
+        }
+        else
+        {
+            var containerEndpoint = string.Format("https://{0}.blob.core.windows.net/{1}", storageAccountName, containerName);
+            return new(new Uri(containerEndpoint), new DefaultAzureCredential());
+        }
+    }
+
+    private static RunConfig ReadParameters(Stream input, string fileName)
+    {
+        var fileExtension = Path.GetExtension(fileName);
+        switch (fileExtension?.ToLower())
+        {
+            case ".json":
+                return JsonSerializer.Deserialize<RunConfig>(input)
+                    ?? throw new InvalidOperationException("Failed to parse json file.");
+            case ".csv":
+                using (var reader = new StreamReader(input))
+                {
+                    var headers = Regex.Matches(reader.ReadLine()!, CsvMatchesRegex);
+                    var dicto = Regex.Matches(reader.ReadLine()!, CsvMatchesRegex)
+                        .Select((m, i) => new { label = headers[i].Value.Trim('"'), value = m.Value.Trim('"') })
+                        .ToDictionary(kvp => kvp.label, kvp => kvp.value);
+
+                    var from = DateTime.Parse(dicto[nameof(RunConfig.ClaimsCreatedFrom)]);
+                    var to = DateTime.Parse(dicto[nameof(RunConfig.ClaimsCreatedTo)]);
+                    var ids = dicto[nameof(RunConfig.PracticeIds)].Split(',').Select(id => int.Parse(id)).ToList();
+                    return new(from, to, ids);
+                }
+            default:
+                throw new ArgumentException($"Unrecognised trigger file format: {fileExtension}");
+        }
+    }
+
+    private async Task ExportRunDataAsync(
+        string fileName,
+        RunConfig originalConfig,
+        object data)
+    {
+        using var jsonStream = new MemoryStream();
+        var jsonOpts = new JsonSerializerOptions { WriteIndented = true };
+        jsonOpts.Converters.Add(new JsonStringEnumConverter());
+        JsonSerializer.Serialize(jsonStream, new { executionTimestamp, originalConfig, data }, jsonOpts);
+        jsonStream.Seek(0, SeekOrigin.Begin);
+        await exportContainer.UploadBlobAsync($"runs/{executionTimestamp.Ticks}/{fileName}.json", jsonStream);
+    }
+
+    private IEnumerable<ClaimDocument> ObtainDocumentData(RunConfig triggerData)
+    {
+        using var sqlConnection = new SqlConnection(sourceDbConnection);
+        sqlConnection.Open();
+
+        using var command = new SqlCommand(SourceDocSql, sqlConnection);
+        command.Parameters.Add(SqlParamDateFrom, SqlDbType.DateTime2);
+        command.Parameters.Add(SqlParamDateTo, SqlDbType.DateTime2);
+        command.Parameters.Add(SqlParamPracticeIdsCsv, SqlDbType.VarChar);
+        command.Parameters[SqlParamDateFrom].Value = triggerData.ClaimsCreatedFrom;
+        command.Parameters[SqlParamDateTo].Value = triggerData.ClaimsCreatedTo;
+        command.Parameters[SqlParamPracticeIdsCsv].Value = triggerData.PracticeIds == null
+            ? DBNull.Value
+            : string.Join(',', triggerData.PracticeIds);
+
+        using var reader = command.ExecuteReader();
+        var claimDocuments = new List<ClaimDocument>();
+        while (reader.Read())
+        {
+            claimDocuments.Add(
+                new ClaimDocument(
+                    (int)reader[SqlAliasPracticeId],
+                    (int)reader[SqlAliasClaimId],
+                    (ClaimType)reader[SqlAliasClaimType],
+                    (DocumentType)reader[SqlAliasDocumentType],
+                    (string)reader[SqlAliasBlobUri]));
+        }
+
+        return claimDocuments;
+    }
+
+    private async Task<bool> TryCopyDocumentBlobAsync(
+        ClaimDocument claimDocument,
+        ILogger logger)
+    {
+        var docSourceFullUri = new Uri(claimDocument.BlobUri);
+        
+        var containerName = docSourceFullUri.Segments.Skip(1).First().Trim('/');
+        var sourceContainer = sourceBlobAccount.GetBlobContainerClient(containerName);
+        var docPath = string.Join(string.Empty, docSourceFullUri.Segments.Skip(2));
+
+        var sourceBlob = sourceContainer.GetBlobClient(docPath);
+        if (!await sourceBlob.ExistsAsync())
+        {
+            logger.LogWarning($"{logPrefix} Source document not found: {docPath}");
+            return false;
+        }
+
+        var targetBlobPath = string.Format(
+            ExportBlobFormat,
+            claimDocument.PracticeId,
+            claimDocument.ClaimType,
+            claimDocument.ClaimId,
+            claimDocument.DocumentType,
+            sourceBlob.Uri.Segments.Last());
+        var targetBlob = exportContainer.GetBlobClient(targetBlobPath);
+
+        if (await targetBlob.ExistsAsync())
+        {
+            logger.LogInformation($"{logPrefix} Target doc already exists: {targetBlobPath}");
+            return true;
+        }
+
+        var lease = sourceBlob.GetBlobLeaseClient();
+        try
+        {
+            await lease.AcquireAsync(TimeSpan.FromSeconds(-1));
+            await targetBlob.StartCopyFromUriAsync(sourceBlob.Uri);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, $"{logPrefix} Error during copy of {docPath} --> {targetBlobPath}");
+            return false;
+        }
+        finally
+        {
+            BlobProperties sourceProperties = await sourceBlob.GetPropertiesAsync();
+            if (sourceProperties.LeaseState == LeaseState.Leased)
+            {
+                await lease.BreakAsync();
+            }
+        }
+
+        return true;
+    }
+}
