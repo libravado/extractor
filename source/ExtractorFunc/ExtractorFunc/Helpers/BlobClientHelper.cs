@@ -1,4 +1,6 @@
-﻿using Azure.Identity;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
@@ -10,7 +12,7 @@ internal static class BlobClientHelper
     private const string DevConnection = "UseDevelopmentStorage=true";
     private const string AccountUrlFormat = "https://{0}.blob.core.windows.net";
 
-    public static async Task CopyBlobAsync(BlobClient source, BlobClient target)
+    public static async Task CopyToAsync(this BlobClient source, BlobClient target)
     {
         if (!await source.ExistsAsync())
         {
@@ -34,6 +36,16 @@ internal static class BlobClientHelper
                 }
             }
         }
+    }
+
+    public static async Task SendJsonAsync(this BlobContainerClient container, object data, string path)
+    {
+        using var jsonStream = new MemoryStream();
+        var jsonOpts = new JsonSerializerOptions { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+        jsonOpts.Converters.Add(new JsonStringEnumConverter());
+        JsonSerializer.Serialize(jsonStream, data, jsonOpts);
+        jsonStream.Seek(0, SeekOrigin.Begin);
+        await container.UploadBlobAsync(path, jsonStream);
     }
 
     public static BlobServiceClient GetDevAccount() => new(DevConnection);

@@ -1,107 +1,92 @@
 using Azure.Storage.Blobs;
-using ExtractorFunc.Helpers;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using ExtractorFunc.Helpers;
+using ExtractorFunc.Models;
 
-namespace ExtractorFunc
+namespace ExtractorFunc;
+
+/// <summary>
+/// A function that extracts docs.
+/// </summary>
+public class ExtractDocsFunction
 {
+    private const string TriggerContainerName = "wns-data-extract-trigger";
+
+    private readonly string sourceDbConnection;
+    private readonly BlobServiceClient sourceAccount;
+    private readonly BlobContainerClient exportContainer;
+
     /// <summary>
-    /// Extracts source documents into a separate container, based on filter parameters
-    /// that are delivered within the contents of a blob trigger file.
+    /// Initialises a new instance of the <see cref="ExtractDocsFunction"/> class.
     /// </summary>
-    public class ExtractDocs
+    /// <param name="config">The configuration.</param>
+    /// <param name="env">The hosting environment.</param>
+    public ExtractDocsFunction(IConfiguration config, IHostingEnvironment env)
     {
-        private const string TriggerContainerName = "wns-data-extract-trigger";
-
-        private readonly string sourceDbConnection;
-        private readonly BlobServiceClient sourceAccount;
-        private readonly BlobContainerClient exportContainer;
-        private readonly DateTime localTimestamp;
-        private readonly string logPrefix;
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="ExtractDocs"/> class.
-        /// </summary>
-        /// <param name="config">The configuration.</param>
-        /// <param name="env">The environment.</param>
-        public ExtractDocs(IConfiguration config, IHostingEnvironment env)
+        if (env.IsDevelopment())
         {
-            /*
-            
-            TODO!:
-              - Dont plan exceptions; return failure reason / bool / copyresult object, etc instead
-              - Export/runs... produce a SINGLE result file in a flat folder
-              - Handle global errors and write out result file accordingly
-              - Handle when the query produces 0 results!
-
-            */
-
-            localTimestamp = DateTime.Now;
-            logPrefix = $"Extract {localTimestamp.Ticks}";
-            sourceDbConnection = config.GetConnectionString("SourceDb");
-
-            if (env.IsDevelopment())
-            {
-                sourceAccount = BlobClientHelper.GetDevAccount();
-                exportContainer = BlobClientHelper.GetDevContainer(config["ExportBlobContainerName"]);
-            }
-            else
-            {
-                sourceAccount = BlobClientHelper.GetHostedAccount(config["SourceDocsStorageAccountName"]);
-                exportContainer = BlobClientHelper.GetHostedContainer(
-                    config["ExportBlobStorageAccountName"],
-                    config["ExportBlobContainerName"]);
-            }
-
-            exportContainer.CreateIfNotExists();
+            sourceAccount = BlobClientHelper.GetDevAccount();
+            exportContainer = BlobClientHelper.GetDevContainer(config["ExportBlobContainerName"]);
+        }
+        else
+        {
+            sourceAccount = BlobClientHelper.GetHostedAccount(config["SourceDocsStorageAccountName"]);
+            exportContainer = BlobClientHelper.GetHostedContainer(
+                config["ExportBlobStorageAccountName"],
+                config["ExportBlobContainerName"]);
         }
 
-        /// <summary>
-        /// Executes the function.
-        /// </summary>
-        /// <param name="triggerFile">The trigger file.</param>
-        /// <param name="triggerFileName">The trigger file name.</param>
-        /// <param name="logger">The logger.</param>
-        [FunctionName("ExtractDocs")]
-        public async Task Run(
-            [BlobTrigger($"{TriggerContainerName}/{{triggerFileName}}", Connection = "TriggerBlobStorage")] Stream triggerFile,
-            string triggerFileName,
-            ILogger logger)
+        exportContainer.CreateIfNotExists();
+        sourceDbConnection = config.GetConnectionString("SourceDb");
+    }
+
+    /// <summary>
+    /// Runs the function.
+    /// </summary>
+    /// <param name="triggerFile">The trigger payload.</param>
+    /// <param name="triggerFileName">The trigger file name.</param>
+    [FunctionName("ExtractDocs")]
+    public async Task Run(
+        [BlobTrigger($"{TriggerContainerName}/{{triggerFileName}}", Connection = "TriggerBlobStorage")] Stream triggerFile,
+        string triggerFileName)
+    {
+        var results = await RunInternalAsync(triggerFile, triggerFileName);
+        await exportContainer.SendJsonAsync(results, $"runs/{results.LocalTimestamp:o}.results.json");
+    }
+
+    private async Task<RunResult> RunInternalAsync(Stream triggerFile, string triggerFileName)
+    {
+        var retVal = new RunResult();
+
+        try
         {
-            logger.LogInformation($"{logPrefix}: START");
-
-            var runConfig = TriggerParser.ReadTriggerConfig(triggerFile, triggerFileName);
-            var documents = SqlHelper.GatherDocumentData(sourceDbConnection, runConfig);
-            var documentCount = documents.Count;
-
-            logger.LogInformation($"{logPrefix}: Source documents found: {documentCount}");
-
-            using var queryDataStream = RunDataHelper.PrepareRunDataJson(localTimestamp, runConfig, new { documentCount, documents });
-            await exportContainer.UploadBlobAsync($"runs/{localTimestamp.Ticks}/querydata.json", queryDataStream);
-
-            var failedUris = new List<string>();
+            retVal.RunConfig = TriggerParser.ReadTriggerConfig(triggerFile, triggerFileName);
+            var documents = SqlHelper.GatherDocumentData(sourceDbConnection, retVal.RunConfig);
+            retVal.DocumentsFound = documents.Count;
+            retVal.FailedUris = new List<string>();
             foreach (var document in documents)
             {
                 try
                 {
                     var source = document.ToSourceBlob(sourceAccount);
                     var target = exportContainer.GetBlobClient(document.ToTargetPath());
-                    await BlobClientHelper.CopyBlobAsync(source, target);
+                    await source.CopyToAsync(target);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    logger.LogWarning(ex, $"{logPrefix}: Failed to copy: {document.BlobUri}");
-                    failedUris.Add(document.BlobUri);
+                    retVal.FailedUris.Add(document.BlobUri);
                 }
             }
 
-            var failedUriCount = failedUris.Count;
-            using var resultsStream = RunDataHelper.PrepareRunDataJson(localTimestamp, runConfig, new { documentCount, failedUriCount, failedUris });
-            await exportContainer.UploadBlobAsync($"runs/{localTimestamp.Ticks}/results.json", resultsStream);
-
-            logger.LogInformation($"{logPrefix}: END");
+            retVal.RanToCompletion = true;
         }
+        catch (Exception ex)
+        {
+            retVal.ErrorMessage = $"{ex.GetType().Name}: {ex.Message}";
+        }
+
+        return retVal;
     }
 }
