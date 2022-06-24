@@ -1,10 +1,12 @@
 ﻿using System.Data;
 using Microsoft.Data.SqlClient;
-using ExtractorFunc.Models;
+using Microsoft.Extensions.Configuration;
+using Pawtal.ExtractDocs.Func.Models;
 
-namespace ExtractorFunc.Helpers;
+namespace Pawtal.ExtractDocs.Func.Repos;
 
-internal static class SqlHelper
+/// <inheritdoc cref="IClaimDocumentRepo"/>
+public class ClaimDocumentSqlRepo : IClaimDocumentRepo
 {
     private const string SqlParamDateFrom = "@ClaimsCreatedFrom";
     private const string SqlParamDateTo = "@ClaimsCreatedTo";
@@ -14,7 +16,6 @@ internal static class SqlHelper
     private const string SqlAliasClaimType = "ClaimType";
     private const string SqlAliasDocumentType = "DocumentType";
     private const string SqlAliasBlobUri = "BlobUri";
-
     private const string SourceDocSql = $@"
 drop table  if exists #pids
 select      value into #pids    from string_split({SqlParamPracticeIdsCsv}, ',')
@@ -32,9 +33,20 @@ and         {SqlParamPracticeIdsCsv} is null or pid.value is not null
 and         c.type_id           in (1, 2)
 ";
 
-    public static List<ClaimDocument> GatherDocumentData(
-        string connectionString,
-        RunConfig triggerData)
+    private readonly string connectionString;
+
+    /// <summary>
+    /// Initialises a new instance of the <see cref="ClaimDocumentSqlRepo"/>
+    /// class.
+    /// </summary>
+    /// <param name="config">The configuration.</param>
+    public ClaimDocumentSqlRepo(IConfiguration config)
+    {
+        connectionString = config.GetConnectionString("SourceDb");
+    }
+    
+    /// <inheritdoc/>
+    public List<ClaimDocument> GetClaimDocuments(RunConfig runConfig)
     {
         using var sqlConnection = new SqlConnection(connectionString);
         sqlConnection.Open();
@@ -43,11 +55,11 @@ and         c.type_id           in (1, 2)
         command.Parameters.Add(SqlParamDateFrom, SqlDbType.DateTime2);
         command.Parameters.Add(SqlParamDateTo, SqlDbType.DateTime2);
         command.Parameters.Add(SqlParamPracticeIdsCsv, SqlDbType.VarChar);
-        command.Parameters[SqlParamDateFrom].Value = triggerData.ClaimsCreatedFrom;
-        command.Parameters[SqlParamDateTo].Value = triggerData.ClaimsCreatedTo;
-        command.Parameters[SqlParamPracticeIdsCsv].Value = triggerData.PracticeIds == null
+        command.Parameters[SqlParamDateFrom].Value = runConfig.ClaimsCreatedFrom;
+        command.Parameters[SqlParamDateTo].Value = runConfig.ClaimsCreatedTo;
+        command.Parameters[SqlParamPracticeIdsCsv].Value = runConfig.PracticeIds == null
             ? DBNull.Value
-            : string.Join(',', triggerData.PracticeIds);
+            : string.Join(',', runConfig.PracticeIds);
 
         using var reader = command.ExecuteReader();
         var retVal = new List<ClaimDocument>();

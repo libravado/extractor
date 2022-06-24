@@ -2,10 +2,12 @@ using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using ExtractorFunc.Helpers;
-using ExtractorFunc.Models;
+using Pawtal.ExtractDocs.Func.Helpers;
+using Pawtal.ExtractDocs.Func.Models;
+using Pawtal.ExtractDocs.Func.Repos;
+using Pawtal.ExtractDocs.Func.Services;
 
-namespace ExtractorFunc;
+namespace Pawtal.ExtractDocs.Func;
 
 /// <summary>
 /// A function that extracts docs.
@@ -14,32 +16,34 @@ public class ExtractDocsFunction
 {
     private const string TriggerContainerName = "wns-data-extract-trigger";
 
-    private readonly string sourceDbConnection;
     private readonly BlobServiceClient sourceAccount;
     private readonly BlobContainerClient exportContainer;
+    private readonly IClaimDocumentRepo claimDocumentRepo;
+    private readonly IBlobClientService blobClientService;
+    private readonly IRunConfigParser runConfigParser;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="ExtractDocsFunction"/> class.
     /// </summary>
     /// <param name="config">The configuration.</param>
     /// <param name="env">The hosting environment.</param>
-    public ExtractDocsFunction(IConfiguration config, IHostingEnvironment env)
+    /// <param name="blobClientService">The blob client service.</param>
+    /// <param name="claimDocumentRepo">The claim document repo.</param>
+    /// <param name="runConfigParser">The run config file parser.</param>
+    public ExtractDocsFunction(
+        IConfiguration config,
+        IHostingEnvironment env,
+        IBlobClientService blobClientService,
+        IClaimDocumentRepo claimDocumentRepo,
+        IRunConfigParser runConfigParser)
     {
-        if (env.IsDevelopment())
-        {
-            sourceAccount = BlobClientHelper.GetDevAccount();
-            exportContainer = BlobClientHelper.GetDevContainer(config["ExportBlobContainerName"]);
-        }
-        else
-        {
-            sourceAccount = BlobClientHelper.GetHostedAccount(config["SourceDocsStorageAccountName"]);
-            exportContainer = BlobClientHelper.GetHostedContainer(
-                config["ExportBlobStorageAccountName"],
-                config["ExportBlobContainerName"]);
-        }
+        this.blobClientService = blobClientService;
+        this.claimDocumentRepo = claimDocumentRepo;
+        this.runConfigParser = runConfigParser;
 
-        exportContainer.CreateIfNotExists();
-        sourceDbConnection = config.GetConnectionString("SourceDb");
+        sourceAccount = env.GetSourceBlobAccount(config);
+        exportContainer = env.GetExportContainer(config);
+        blobClientService.CreateIfNotExists(exportContainer);
     }
 
     /// <summary>
@@ -53,7 +57,8 @@ public class ExtractDocsFunction
         string triggerFileName)
     {
         var results = await RunInternalAsync(triggerFile, triggerFileName);
-        await exportContainer.SendJsonAsync(results, $"runs/{results.LocalTimestamp:o}.results.json");
+        var fileName = $"runs/{results.LocalTimestamp:o}.results.json";
+        await blobClientService.UploadJsonAsync(exportContainer, results, fileName);
     }
 
     private async Task<RunResult> RunInternalAsync(Stream triggerFile, string triggerFileName)
@@ -62,17 +67,19 @@ public class ExtractDocsFunction
 
         try
         {
-            retVal.RunConfig = TriggerParser.ReadTriggerConfig(triggerFile, triggerFileName);
-            var documents = SqlHelper.GatherDocumentData(sourceDbConnection, retVal.RunConfig);
+            var extension = Path.GetExtension(triggerFileName);
+            retVal.RunConfig = runConfigParser.Parse(triggerFile, extension);
+
+            var documents = claimDocumentRepo.GetClaimDocuments(retVal.RunConfig);
             retVal.DocumentsFound = documents.Count;
             retVal.FailedUris = new List<string>();
             foreach (var document in documents)
             {
                 try
                 {
-                    var source = document.ToSourceBlob(sourceAccount);
-                    var target = exportContainer.GetBlobClient(document.ToTargetPath());
-                    await source.CopyToAsync(target);
+                    var source = blobClientService.GetBlobClient(sourceAccount, document.BlobUri);
+                    var target = exportContainer.GetBlobClient(document.ExportPath);
+                    await blobClientService.CopyBlobAsync(source, target);
                 }
                 catch
                 {

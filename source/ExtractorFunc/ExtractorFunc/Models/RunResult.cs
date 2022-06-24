@@ -1,4 +1,4 @@
-﻿namespace ExtractorFunc.Models;
+﻿namespace Pawtal.ExtractDocs.Func.Models;
 
 internal record RunResult
 {
