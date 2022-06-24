@@ -26,7 +26,10 @@ internal static class TriggerParser
 
                     var from = DateTime.Parse(dicto[nameof(RunConfig.ClaimsCreatedFrom)]);
                     var to = DateTime.Parse(dicto[nameof(RunConfig.ClaimsCreatedTo)]);
-                    var ids = dicto[nameof(RunConfig.PracticeIds)].Split(',').Select(id => int.Parse(id)).ToList();
+                    var ids = dicto.TryGetValue(nameof(RunConfig.PracticeIds), out var idsString)
+                        ? idsString.Split(',').Select(id => int.Parse(id)).ToList()
+                        : null;
+
                     return new(from, to, ids);
                 }
             default:
