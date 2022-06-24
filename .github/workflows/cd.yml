@@ -1,4 +1,4 @@
-name: cd
+name: CD Extractor Func
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +10,7 @@ on:
     branches:
     - main
     paths:
-    - source
+    - source/ExtractorFunc/**
 jobs:
   continuous-delivery:
     runs-on: ubuntu-latest
