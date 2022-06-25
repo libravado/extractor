@@ -3,7 +3,7 @@ using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
-namespace Pawtal.ExtractDocs.Func.Helpers;
+namespace ExtractorFunc.Helpers;
 
 internal static class EnvironmentExtensions
 {

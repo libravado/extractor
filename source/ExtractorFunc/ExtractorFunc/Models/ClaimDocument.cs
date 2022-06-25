@@ -1,4 +1,4 @@
-﻿namespace Pawtal.ExtractDocs.Func.Models;
+﻿namespace ExtractorFunc.Models;
 
 /// <summary>
 /// A claim document.
@@ -13,18 +13,4 @@ public record ClaimDocument(
     int ClaimId,
     ClaimType ClaimType,
     DocumentType DocumentType,
-    string BlobUri)
-{
-    private const string TargetPathFormat = "practice-{0}/{1}/claim-{2}/{3}/{4}";
-
-    /// <summary>
-    /// Gets the target path for export.
-    /// </summary>
-    public string ExportPath => string.Format(
-        TargetPathFormat,
-        PracticeId,
-        ClaimType,
-        ClaimId,
-        DocumentType,
-        new Uri(BlobUri).Segments.Last());
-}
+    string BlobUri);

@@ -1,6 +1,6 @@
-﻿using Pawtal.ExtractDocs.Func.Models;
+﻿using ExtractorFunc.Models;
 
-namespace Pawtal.ExtractDocs.Func.Services;
+namespace ExtractorFunc.Services;
 
 /// <summary>
 /// Parses data into instances of <see cref="RunConfig"/>.

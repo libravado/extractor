@@ -1,6 +1,6 @@
-﻿namespace Pawtal.ExtractDocs.Func.Models;
+﻿namespace ExtractorFunc.Models;
 
-internal record RunResult
+public record RunResult
 {
     public DateTime LocalTimestamp { get; } = DateTime.Now;
 

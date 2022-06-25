@@ -1,6 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 
-namespace Pawtal.ExtractDocs.Func.Services;
+namespace ExtractorFunc.Services;
 
 /// <summary>
 /// Communication with blobs.

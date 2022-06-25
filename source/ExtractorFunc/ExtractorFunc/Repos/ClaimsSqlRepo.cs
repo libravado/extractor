@@ -1,12 +1,12 @@
 ﻿using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Pawtal.ExtractDocs.Func.Models;
+using ExtractorFunc.Models;
 
-namespace Pawtal.ExtractDocs.Func.Repos;
+namespace ExtractorFunc.Repos;
 
-/// <inheritdoc cref="IClaimDocumentRepo"/>
-public class ClaimDocumentSqlRepo : IClaimDocumentRepo
+/// <inheritdoc cref="IClaimDocsRepo"/>
+public class ClaimDocsSqlRepo : IClaimDocsRepo
 {
     private const string SqlParamDateFrom = "@ClaimsCreatedFrom";
     private const string SqlParamDateTo = "@ClaimsCreatedTo";
@@ -36,11 +36,11 @@ and         c.type_id           in (1, 2)
     private readonly string connectionString;
 
     /// <summary>
-    /// Initialises a new instance of the <see cref="ClaimDocumentSqlRepo"/>
+    /// Initialises a new instance of the <see cref="ClaimDocsSqlRepo"/>
     /// class.
     /// </summary>
     /// <param name="config">The configuration.</param>
-    public ClaimDocumentSqlRepo(IConfiguration config)
+    public ClaimDocsSqlRepo(IConfiguration config)
     {
         connectionString = config.GetConnectionString("SourceDb");
     }

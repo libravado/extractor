@@ -1,13 +1,9 @@
-using Azure.Storage.Blobs;
+using ExtractorFunc.Models;
+using ExtractorFunc.Repos;
+using ExtractorFunc.Services;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Pawtal.ExtractDocs.Func.Helpers;
-using Pawtal.ExtractDocs.Func.Models;
-using Pawtal.ExtractDocs.Func.Repos;
-using Pawtal.ExtractDocs.Func.Services;
 
-namespace Pawtal.ExtractDocs.Func;
+namespace ExtractorFunc;
 
 /// <summary>
 /// A function that extracts docs.
@@ -16,34 +12,32 @@ public class ExtractDocsFunction
 {
     private const string TriggerContainerName = "wns-data-extract-trigger";
 
-    private readonly BlobServiceClient sourceAccount;
-    private readonly BlobContainerClient exportContainer;
-    private readonly IClaimDocumentRepo claimDocumentRepo;
-    private readonly IBlobClientService blobClientService;
+    private readonly IBlobRepo blobRepo;
+    private readonly IClaimDocsRepo claimDocumentRepo;
     private readonly IRunConfigParser runConfigParser;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="ExtractDocsFunction"/> class.
     /// </summary>
-    /// <param name="config">The configuration.</param>
-    /// <param name="env">The hosting environment.</param>
-    /// <param name="blobClientService">The blob client service.</param>
+    /// <param name="blobRepo">The blob repo.</param>
     /// <param name="claimDocumentRepo">The claim document repo.</param>
     /// <param name="runConfigParser">The run config file parser.</param>
     public ExtractDocsFunction(
-        IConfiguration config,
-        IHostingEnvironment env,
-        IBlobClientService blobClientService,
-        IClaimDocumentRepo claimDocumentRepo,
+        IBlobRepo blobRepo,
+        IClaimDocsRepo claimDocumentRepo,
         IRunConfigParser runConfigParser)
     {
-        this.blobClientService = blobClientService;
+        this.blobRepo = blobRepo;
         this.claimDocumentRepo = claimDocumentRepo;
         this.runConfigParser = runConfigParser;
 
-        sourceAccount = env.GetSourceBlobAccount(config);
-        exportContainer = env.GetExportContainer(config);
-        blobClientService.CreateIfNotExists(exportContainer);
+    /*
+        //TODO!
+            - The "pure" Blob library functions can then be moved from IBlobServiceClient into extensions (?? perhaps.. pending testability)
+                - OR.... Make moar interfaces outta everything?
+            - ALSO: Overall "Split" information regarding Claims vs PAs eg 70:30 (?) etc
+            - ALSO: Unit tests, obvs
+    */
     }
 
     /// <summary>
@@ -57,19 +51,16 @@ public class ExtractDocsFunction
         string triggerFileName)
     {
         var results = await RunInternalAsync(triggerFile, triggerFileName);
-        var fileName = $"runs/{results.LocalTimestamp:o}.results.json";
-        await blobClientService.UploadJsonAsync(exportContainer, results, fileName);
+        await blobRepo.UploadResultsAsync(results);
     }
 
     private async Task<RunResult> RunInternalAsync(Stream triggerFile, string triggerFileName)
     {
         var retVal = new RunResult();
-
         try
         {
             var extension = Path.GetExtension(triggerFileName);
             retVal.RunConfig = runConfigParser.Parse(triggerFile, extension);
-
             var documents = claimDocumentRepo.GetClaimDocuments(retVal.RunConfig);
             retVal.DocumentsFound = documents.Count;
             retVal.FailedUris = new List<string>();
@@ -77,9 +68,7 @@ public class ExtractDocsFunction
             {
                 try
                 {
-                    var source = blobClientService.GetBlobClient(sourceAccount, document.BlobUri);
-                    var target = exportContainer.GetBlobClient(document.ExportPath);
-                    await blobClientService.CopyBlobAsync(source, target);
+                    await blobRepo.CopyDocumentAsync(document);
                 }
                 catch
                 {

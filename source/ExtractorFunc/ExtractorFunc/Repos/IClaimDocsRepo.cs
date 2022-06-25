@@ -1,11 +1,11 @@
-﻿using Pawtal.ExtractDocs.Func.Models;
+﻿using ExtractorFunc.Models;
 
-namespace Pawtal.ExtractDocs.Func.Repos;
+namespace ExtractorFunc.Repos;
 
 /// <summary>
 /// Repository for claim document metadata.
 /// </summary>
-public interface IClaimDocumentRepo
+public interface IClaimDocsRepo
 {
     /// <summary>
     /// Gets a list of claim documents from source, based on run configuration.

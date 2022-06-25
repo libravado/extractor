@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
-using Pawtal.ExtractDocs.Func.Models;
+using ExtractorFunc.Models;
 
-namespace Pawtal.ExtractDocs.Func.Services;
+namespace ExtractorFunc.Services;
 
 /// <inheritdoc cref="IRunConfigParser"/>
 public class RunConfigParser : IRunConfigParser

@@ -1,4 +1,4 @@
-﻿namespace Pawtal.ExtractDocs.Func.Models;
+﻿namespace ExtractorFunc.Models;
 
 /// <summary>
 /// Document type.

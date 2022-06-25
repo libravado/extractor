@@ -8,7 +8,7 @@ ___
 ### Developer Quickstart
 - Ensure you have the latest VS installed (2022+)
 - Install Azure Storage Explorer (dont need local admin rights if installing for your user only)
-- Start debugging the function app (after clicking "Set as startup project" on Pawtal.ExtractDocs.Func project in VS)
+- Start debugging the function app (after clicking "Set as startup project" on ExtractorFunc project in VS)
     - This should start "Azurite" service (see Output > Service Dependencies in VS to confirm)
     - Open Azure Storage Explorer and under *Local & Attached > Storage Accounts > Emulator*, create a container called `wns-data-extract-trigger` (you should not have to do this step again, unless you remove it)
 - With the app debugging, (and breakpoint inside function method, if desired), drag and drop a trigger payload file to this new container (see [Trigger Payload](#trigger-payload) for examples)
