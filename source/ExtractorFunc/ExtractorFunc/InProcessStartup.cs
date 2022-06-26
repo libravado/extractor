@@ -15,8 +15,8 @@ namespace ExtractorFunc
         /// <inheritdoc/>
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddScoped<IBlobRepo, BlobRepo>();
             builder.Services.AddScoped<IClaimDocsRepo, ClaimDocsSqlRepo>();
+            builder.Services.AddScoped<IDataExtractRepo, DataExtractRepo>();
             builder.Services.AddScoped<IBlobClientService, BlobClientService>();
             builder.Services.AddScoped<IRunConfigParser, RunConfigParser>();
         }

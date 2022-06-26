@@ -1,14 +1,13 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using ExtractorFunc.Helpers;
 using ExtractorFunc.Models;
 using ExtractorFunc.Services;
 
 namespace ExtractorFunc.Repos;
 
-/// <inheritdoc cref="IBlobRepo"/>
-public class BlobRepo : IBlobRepo
+/// <inheritdoc cref="IDataExtractRepo"/>
+public class DataExtractRepo : IDataExtractRepo
 {
     private const string TargetPathFormat = "practice-{0}/{1}/claim-{2}/{3}/{4}";
 
@@ -17,20 +16,25 @@ public class BlobRepo : IBlobRepo
     private readonly IBlobClientService blobClientService;
 
     /// <summary>
-    /// Initialises a new instance of the <see cref="BlobRepo"/> class.
+    /// Initialises a new instance of the <see cref="DataExtractRepo"/> class.
     /// </summary>
     /// <param name="env"></param>
     /// <param name="config"></param>
     /// <param name="blobClientService"></param>
-    public BlobRepo(
+    public DataExtractRepo(
         IHostingEnvironment env,
         IConfiguration config,
         IBlobClientService blobClientService)
     {
-        sourceAccount = env.GetSourceBlobAccount(config);
-        exportContainer = env.GetExportContainer(config);
-
         this.blobClientService = blobClientService;
+
+        sourceAccount = this.blobClientService.GetAccount(
+            env.IsDevelopment() ? null : config["SourceDocsStorageAccountName"]);
+
+        exportContainer = this.blobClientService.GetContainer(
+            config["ExportBlobContainerName"],
+            env.IsDevelopment() ? null : config["ExportBlobStorageAccountName"]);
+
         this.blobClientService.CreateIfNotExists(exportContainer);
     }
 

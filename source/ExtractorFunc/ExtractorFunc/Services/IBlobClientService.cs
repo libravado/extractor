@@ -8,6 +8,23 @@ namespace ExtractorFunc.Services;
 public interface IBlobClientService
 {
     /// <summary>
+    /// Gets a storage account client.
+    /// </summary>
+    /// <param name="hostedAccountName">The account name (if hosted). If null, a
+    /// client for local emulation is returned.</param>
+    /// <returns>A storage account client.</returns>
+    public BlobServiceClient GetAccount(string? hostedAccountName);
+
+    /// <summary>
+    /// Gets a storage account container client.
+    /// </summary>
+    /// <param name="containerName">The container name.</param>
+    /// <param name="hostedAccountName">The account name (if hosted). If null, a
+    /// client for local emulation is returned.</param>
+    /// <returns>A storage account container client.</returns>
+    public BlobContainerClient GetContainer(string containerName, string? hostedAccountName);
+
+    /// <summary>
     /// Copies a blob to another location. The blobs do not necessary have to be
     /// in the same container (or indeed the same account).
     /// </summary>

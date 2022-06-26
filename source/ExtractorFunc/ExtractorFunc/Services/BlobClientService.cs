@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
@@ -9,6 +10,25 @@ namespace ExtractorFunc.Services;
 /// <inheritdoc cref="IBlobClientService"/>
 public class BlobClientService : IBlobClientService
 {
+    private const string DevConnection = "UseDevelopmentStorage=true";
+    private const string AccountUrlFormat = "https://{0}.blob.core.windows.net";
+
+    /// <inheritdoc/>
+    public BlobServiceClient GetAccount(string? hostedAccountName)
+        => hostedAccountName == null
+            ? new(DevConnection)
+            : new(
+                new Uri(GetAccountUrl(hostedAccountName)),
+                new DefaultAzureCredential());
+
+    /// <inheritdoc/>
+    public BlobContainerClient GetContainer(string containerName, string? hostedAccountName)
+        => hostedAccountName == null
+            ? new(DevConnection, containerName)
+            : new(
+                new Uri(GetAccountUrl(hostedAccountName + "/" + containerName)),
+                new DefaultAzureCredential());
+
     /// <inheritdoc/>
     public async Task CopyBlobAsync(BlobClient source, BlobClient target)
     {
@@ -65,4 +85,7 @@ public class BlobClientService : IBlobClientService
         jsonStream.Seek(0, SeekOrigin.Begin);
         await container.UploadBlobAsync(path, jsonStream);
     }
+
+    private static string GetAccountUrl(string accountName)
+        => string.Format(AccountUrlFormat, accountName);
 }

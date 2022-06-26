@@ -5,7 +5,7 @@ namespace ExtractorFunc.Repos;
 /// <summary>
 /// Repository for managing document blobs.
 /// </summary>
-public interface IBlobRepo
+public interface IDataExtractRepo
 {
     /// <summary>
     /// Moves a copy of the document to the target.

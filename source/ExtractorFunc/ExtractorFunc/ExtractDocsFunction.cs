@@ -12,7 +12,7 @@ public class ExtractDocsFunction
 {
     private const string TriggerContainerName = "wns-data-extract-trigger";
 
-    private readonly IBlobRepo blobRepo;
+    private readonly IDataExtractRepo blobRepo;
     private readonly IClaimDocsRepo claimDocumentRepo;
     private readonly IRunConfigParser runConfigParser;
 
@@ -23,21 +23,13 @@ public class ExtractDocsFunction
     /// <param name="claimDocumentRepo">The claim document repo.</param>
     /// <param name="runConfigParser">The run config file parser.</param>
     public ExtractDocsFunction(
-        IBlobRepo blobRepo,
+        IDataExtractRepo blobRepo,
         IClaimDocsRepo claimDocumentRepo,
         IRunConfigParser runConfigParser)
     {
         this.blobRepo = blobRepo;
         this.claimDocumentRepo = claimDocumentRepo;
         this.runConfigParser = runConfigParser;
-
-    /*
-        //TODO!
-            - The "pure" Blob library functions can then be moved from IBlobServiceClient into extensions (?? perhaps.. pending testability)
-                - OR.... Make moar interfaces outta everything?
-            - ALSO: Overall "Split" information regarding Claims vs PAs eg 70:30 (?) etc
-            - ALSO: Unit tests, obvs
-    */
     }
 
     /// <summary>
@@ -64,11 +56,18 @@ public class ExtractDocsFunction
             var documents = claimDocumentRepo.GetClaimDocuments(retVal.RunConfig);
             retVal.DocumentsFound = documents.Count;
             retVal.FailedUris = new List<string>();
+            retVal.DocumentsCopiedByClaimType = new Dictionary<ClaimType, int>
+            {
+                { ClaimType.PreAuth, 0 },
+                { ClaimType.Claim, 0},
+            };
+
             foreach (var document in documents)
             {
                 try
                 {
                     await blobRepo.CopyDocumentAsync(document);
+                    retVal.DocumentsCopiedByClaimType[document.ClaimType]++;
                 }
                 catch
                 {
