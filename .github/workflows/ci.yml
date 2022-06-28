@@ -39,4 +39,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: actionoutputs
-        path: ${{ env.STAGING_DIR }}/outputs
+        path: ${{ env.STAGING_DIR }}/outputs/
