@@ -16,10 +16,8 @@ jobs:
       ENV_PREFIX: ${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}
       STAGING_DIR: ${{ github.workspace }}/drop
     steps:
-    - name: Setup action outputs directory
-      run: mkdir -p ${{ env.STAGING_DIR }}/outputs
-    - name: Save action output for environment
-      run: echo $ENV_PREFIX > ${{ env.STAGING_DIR }}/outputs/env
+    - name: Save outputs for subsequent workflows 
+      run: echo '{"env":"lol"}' > ${{ env.STAGING_DIR }}/outputs.json
     - uses: actions/checkout@v3
     - uses: actions/setup-dotnet@v2
       with:
@@ -38,5 +36,5 @@ jobs:
     - name: Drop artifact - action outputs
       uses: actions/upload-artifact@v3
       with:
-        name: actionoutputs
-        path: ${{ env.STAGING_DIR }}/outputs/
+        name: outputs
+        path: ${{ env.STAGING_DIR }}/outputs.json
