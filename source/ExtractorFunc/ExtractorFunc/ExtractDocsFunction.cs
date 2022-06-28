@@ -53,10 +53,16 @@ public class ExtractDocsFunction
         {
             var extension = Path.GetExtension(triggerFileName);
             retVal.RunConfig = runConfigParser.Parse(triggerFile, extension);
-            var documents = claimDocumentRepo.GetClaimDocuments(retVal.RunConfig);
+            var documents = await claimDocumentRepo.GetClaimDocumentsAync(retVal.RunConfig);
             retVal.DocumentsFound = documents.Count;
+            retVal.DocumentsFoundByClaimType = new()
+            {
+                { ClaimType.PreAuth, documents.Count(d => d.ClaimType == ClaimType.PreAuth) },
+                { ClaimType.Claim, documents.Count(d => d.ClaimType == ClaimType.Claim) },
+            };
+
             retVal.FailedUris = new List<string>();
-            retVal.DocumentsCopiedByClaimType = new Dictionary<ClaimType, int>
+            retVal.DocumentsExportedByClaimType = new()
             {
                 { ClaimType.PreAuth, 0 },
                 { ClaimType.Claim, 0},
@@ -67,7 +73,7 @@ public class ExtractDocsFunction
                 try
                 {
                     await blobRepo.CopyDocumentAsync(document);
-                    retVal.DocumentsCopiedByClaimType[document.ClaimType]++;
+                    retVal.DocumentsExportedByClaimType[document.ClaimType]++;
                 }
                 catch
                 {

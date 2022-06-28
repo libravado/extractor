@@ -18,9 +18,9 @@ public class DataExtractRepo : IDataExtractRepo
     /// <summary>
     /// Initialises a new instance of the <see cref="DataExtractRepo"/> class.
     /// </summary>
-    /// <param name="env"></param>
-    /// <param name="config"></param>
-    /// <param name="blobClientService"></param>
+    /// <param name="env">The hosting environment.</param>
+    /// <param name="config">The configuration.</param>
+    /// <param name="blobClientService">The blob client service.</param>
     public DataExtractRepo(
         IHostingEnvironment env,
         IConfiguration config,
@@ -50,8 +50,8 @@ public class DataExtractRepo : IDataExtractRepo
     /// <inheritdoc/>
     public async Task CopyDocumentAsync(ClaimDocument document)
     {
-        var source = blobClientService.GetBlobClient(sourceAccount, document.BlobUri);
         var exportPath = BuildDocumentPath(document);
+        var source = blobClientService.GetBlobClient(sourceAccount, document.BlobUri);
         var target = exportContainer.GetBlobClient(exportPath);
         await blobClientService.CopyBlobAsync(source, target);
     }

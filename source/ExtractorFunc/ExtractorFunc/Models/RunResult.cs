@@ -21,9 +21,14 @@ public record RunResult
     public int? DocumentsFound { get; set; }
 
     /// <summary>
-    /// Gets the number of (successfully copied) documents, by claim type.
+    /// Gets the number of documents originally found, by claim type.
     /// </summary>
-    public Dictionary<ClaimType, int>? DocumentsCopiedByClaimType { get; set; }
+    public Dictionary<ClaimType, int>? DocumentsFoundByClaimType { get; set; }
+
+    /// <summary>
+    /// Gets the number of documents successfully exported, by claim type.
+    /// </summary>
+    public Dictionary<ClaimType, int>? DocumentsExportedByClaimType { get; set; }
 
     /// <summary>
     /// Gets the number of failed uris.

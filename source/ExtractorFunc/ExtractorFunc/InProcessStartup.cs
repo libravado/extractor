@@ -1,5 +1,8 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ExtractorFunc.Persistence;
 using ExtractorFunc.Repos;
 using ExtractorFunc.Services;
 
@@ -15,7 +18,11 @@ namespace ExtractorFunc
         /// <inheritdoc/>
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddScoped<IClaimDocsRepo, ClaimDocsSqlRepo>();
+            var config = builder.GetContext().Configuration;
+            var dbConnection = config.GetConnectionString("SourceDb");
+            builder.Services.AddDbContext<SourceDbContext>(options => options.UseSqlServer(dbConnection));
+
+            builder.Services.AddScoped<IClaimDocsRepo, ClaimDocsEfRepo>();
             builder.Services.AddScoped<IDataExtractRepo, DataExtractRepo>();
             builder.Services.AddScoped<IBlobClientService, BlobClientService>();
             builder.Services.AddScoped<IRunConfigParser, RunConfigParser>();
