@@ -13,7 +13,8 @@ jobs:
   continuous-integration:
     runs-on: ubuntu-latest
     env:
-      ENV_PREFIX: "${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}"
+      ENV_PREFIX: ${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}
+      STAGING_DIR: ${{ github.workspace }}/drop
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-dotnet@v2
@@ -24,4 +25,9 @@ jobs:
         cd ./source/ExtractorFunc
         dotnet tool restore
         dotnet test --collect:"XPlat Code Coverage"
-        dotnet reportgenerator -targetdir:coveragereport -reports:**/coverage.cobertura.xml -reporttypes:"html"
+        dotnet reportgenerator -targetdir:'${{ env.STAGING_DIR }}/coveragereport' -reports:**/coverage.cobertura.xml -reporttypes:"html"
+    - name: Drop artifact - coveragereport
+      uses: actions/upload-artifact@v3
+      with:
+        name: coveragereport
+        path: ${{ env.STAGING_DIR }}/coveragereport
