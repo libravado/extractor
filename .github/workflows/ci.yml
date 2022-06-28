@@ -32,7 +32,7 @@ jobs:
         name: coveragereport
         path: ${{ env.STAGING_DIR }}/coveragereport
     - name: Save outputs for subsequent workflows 
-      run: echo '{"env":"lol"}' > ${{ env.STAGING_DIR }}/outputs.json
+      run: echo '{"env":"${{ env.ENV_PREFIX }}"}' > ${{ env.STAGING_DIR }}/outputs.json
     - name: Drop artifact - action outputs
       uses: actions/upload-artifact@v3
       with:
