@@ -1,4 +1,4 @@
-name: ci
+name: CI Extractor Func
 on:
   workflow_dispatch:
     inputs:
@@ -8,7 +8,7 @@ on:
         default: dev
   push:
     paths:
-    - source
+    - source/ExtractorFunc/**
 jobs:
   continuous-integration:
     runs-on: ubuntu-latest
@@ -16,3 +16,10 @@ jobs:
       ENV_PREFIX: "${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}"
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Test app
+      run: dotnet test ./source/ExtractorFunc --collect:"XPlat Code Coverage"
+    - name: Generate coverage report
+      run: dotnet reportgenerator -targetdir:coveragereport -reports:**/coverage.cobertura.xml -reporttypes:"html"
