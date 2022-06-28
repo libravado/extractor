@@ -16,8 +16,9 @@ on:
     paths:
     - source/ExtractorFunc/**
 jobs:
-  continuous-delivery:
+  on-ci-success:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
       ENV_PREFIX: ${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}
     steps:
@@ -42,3 +43,8 @@ jobs:
         app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
         package: '${{ github.workspace }}/published'
         publish-profile: ${{ env.PUB_PROFILE_XML }}
+  on-ci-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'The triggering workflow  ${{ github.event.workflow_run.name}} failed'
