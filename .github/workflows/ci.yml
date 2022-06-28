@@ -19,9 +19,9 @@ jobs:
     - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
-    - name: Restore tools
-      run: dotnet tool restore
-    - name: Test app
-      run: dotnet test ./source/ExtractorFunc --collect:"XPlat Code Coverage"
-    - name: Generate coverage report
-      run: dotnet reportgenerator -targetdir:coveragereport -reports:**/coverage.cobertura.xml -reporttypes:"html"
+    - name: Run tests and related
+      run: |
+        cd ./source/ExtractorFunc
+        dotnet tool restore
+        dotnet test --collect:"XPlat Code Coverage"
+        dotnet reportgenerator -targetdir:coveragereport -reports:**/coverage.cobertura.xml -reporttypes:"html"
