@@ -10,7 +10,7 @@ on:
     paths:
     - source/ExtractorFunc/**
 jobs:
-  continuous-integration:
+  run_ci:
     runs-on: ubuntu-latest
     env:
       ENV_PREFIX: ${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}

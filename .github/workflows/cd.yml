@@ -59,7 +59,7 @@ jobs:
         app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
         package: '${{ github.workspace }}/published'
         publish-profile: ${{ env.PUB_PROFILE_XML }}
-  on-ci-failure:
+  ci_failure:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:

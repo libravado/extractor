@@ -12,7 +12,7 @@ on:
     paths:
     - iac/main.bicep
 jobs:
-  deploy-iac:
+  run_iac:
     runs-on: ubuntu-latest
     env:
       ENV_PREFIX: ${{ github.event.inputs.env == '' && 'dev' || github.event.inputs.env }}
