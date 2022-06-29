@@ -35,10 +35,11 @@ jobs:
     - name: Ingest ci outputs
       run: |
         unzip outputs.zip
-        jsonvalue=$(<outputs/outputs.json)
+        jsonvalue=$(<outputs.json)
         echo "$jsonvalue"
 
   on-ci-success:
+    needs: download-ci-output
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
