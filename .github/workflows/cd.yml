@@ -15,7 +15,6 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     outputs:
       ci1: ${{ steps.cacheci.outputs.ci1 }}
-      ci2: ${{ steps.cacheci.outputs.ci2 }}
     steps:
     - name: Download artifact - ci outputs
       uses: actions/github-script@v6
@@ -32,7 +31,6 @@ jobs:
         unzip outputs.zip
         jsonoutputs=$(<outputs.json)
         echo "::set-output name=ci1::$jsonoutputs"
-        echo "::set-output name=ci2::${{ toJson($jsonoutputs) }}"
 
   on-ci-success:
     needs: readci
@@ -45,11 +43,8 @@ jobs:
       run: |
         echo "Environment is... ${{ env.ENV_PREFIX }}"
         echo "Test1... ${{ needs.readci.outputs.ci1 }}"
-        echo "Test2... ${{ needs.readci.outputs.ci2 }}"
-        echo "Test3... ${{ toJson(needs.readci.outputs.ci1).env }}"
-        echo "Test4... ${{ toJson(needs.readci.outputs.ci2).env }}"
-        echo "Test5... ${{ needs.readci.outputs.ci1.env }}"
-        echo "Test6... ${{ needs.readci.outputs.ci2.env }}"
+        echo "Test2... ${{ toJson(needs.readci.outputs.ci1).env }}"
+        echo "Test3... ${{ needs.readci.outputs.ci1.env }}"
     # - uses: actions/checkout@v3
     # - uses: azure/login@v1
     #   with:
