@@ -20,7 +20,7 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          const owner = context.repo.owner, repo: context.repo.repo;
+          const owner = context.repo.owner, repo = context.repo.repo;
           const artifactMetas = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: context.payload.workflow_run.id });
           const artifact_id = artifactMetas.data.artifacts.filter(a => a.name == "outputs")[0].id;
           const artifact = await github.rest.actions.downloadArtifact({ owner, repo, artifact_id, archive_format: 'zip' });
