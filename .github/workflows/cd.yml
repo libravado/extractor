@@ -20,11 +20,10 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          const listArtifacts = github.rest.actions.listWorkflowRunArtifacts;
-          const getArtifact = github.rest.actions.downloadArtifact;
-          const artifactMetas = await listArtifacts({ context.repo.owner, context.repo.repo, run_id: context.payload.workflow_run.id });
+          const owner = context.repo.owner, repo: context.repo.repo;
+          const artifactMetas = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: context.payload.workflow_run.id });
           const artifact_id = artifactMetas.data.artifacts.filter(a => a.name == "outputs")[0].id;
-          const artifact = await getArtifact({ context.repo.owner, context.repo.repo, artifact_id, archive_format: 'zip' });
+          const artifact = await github.rest.actions.downloadArtifact({ owner, repo, artifact_id, archive_format: 'zip' });
           const fs = require('fs');
           fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/outputs.zip`, Buffer.from(artifact.data));
     - id: cacheci
