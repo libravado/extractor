@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
-      ENV_PREFIX: ${{ needs.readci.outputs.env }}
+      ENV_PREFIX: ${{ toJson(needs.readci.outputs.ci).env }}
     steps:
     - uses: actions/checkout@v3
     - uses: azure/login@v1
