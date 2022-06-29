@@ -38,33 +38,27 @@ jobs:
     env:
       ENV_PREFIX: ${{ fromJson(needs.read_ci.outputs.json).env }}
     steps:
-    - name: Raaaaa
+    - uses: actions/checkout@v3
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_SCM_CREDS }}
+    - name: Upgrade bicep
+      run: az bicep upgrade
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Build app
       run: |
-        echo "Environment is... ${{ env.ENV_PREFIX }}"
-        echo "Test1... ${{ needs.read_ci.outputs.json }}"
-        echo "Test2... ${{ fromJson(needs.read_ci.outputs.json) }}"
-        echo "Test3... ${{ fromJson(needs.read_ci.outputs.json).env }}"
-    # - uses: actions/checkout@v3
-    # - uses: azure/login@v1
-    #   with:
-    #     creds: ${{ secrets.AZURE_SCM_CREDS }}
-    # - name: Upgrade bicep
-    #   run: az bicep upgrade
-    # - uses: actions/setup-dotnet@v2
-    #   with:
-    #     dotnet-version: 6.0.x
-    # - name: Build app
-    #   run: |
-    #     dotnet build ./source/ExtractorFunc -c Release -o '${{ github.workspace }}/published'
-    #     pubProfileXml=$(az functionapp deployment list-publishing-profiles -g "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
-    #     echo "::add-mask::$pubProfileXml"
-    #     echo PUB_PROFILE_XML=$pubProfileXml >> $GITHUB_ENV
-    # - name: Publish func
-    #   uses: Azure/functions-action@v1
-    #   with:
-    #     app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
-    #     package: '${{ github.workspace }}/published'
-    #     publish-profile: ${{ env.PUB_PROFILE_XML }}
+        dotnet build ./source/ExtractorFunc -c Release -o '${{ github.workspace }}/published'
+        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
+        echo "::add-mask::$pubProfileXml"
+        echo PUB_PROFILE_XML=$pubProfileXml >> $GITHUB_ENV
+    - name: Publish func
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
+        package: '${{ github.workspace }}/published'
+        publish-profile: ${{ env.PUB_PROFILE_XML }}
   on-ci-failure:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
