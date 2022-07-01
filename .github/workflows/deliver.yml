@@ -32,5 +32,5 @@ jobs:
     needs: gather_deployables
     uses: ./.github/workflows/deploy.yml
     with:
-      delivery: ${{ Number(github.run_number) }}
+      delivery: ${{ parseInt(github.run_number) }}
       environment: dev
