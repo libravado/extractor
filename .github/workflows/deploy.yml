@@ -1,0 +1,35 @@
+name: CD Extractor Func
+on:
+  workflow_call:
+    inputs:
+      delivery:
+        description: Delivery number
+        type: number
+        required: true
+      environment:
+        description: Environment prefix
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      delivery:
+        description: Delivery number
+        type: number
+        required: true
+      environment:
+        description: Environment prefix
+        type: string
+        required: true
+jobs:
+  fetch_deployables:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifact
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        github_token: ${{secrets.GITHUB_TOKEN}}
+        workflow: deliver.yml
+        branch: main
+        run_number: ${{ github.event.inputs.delivery }}
+        path: delivery
+    

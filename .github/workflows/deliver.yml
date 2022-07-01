@@ -1,0 +1,25 @@
+name: deliver
+on:
+  push:
+    branches:
+    - main
+jobs:
+  run_tests:
+    uses: ./.github/workflows/test.yml
+  gather_deployables:
+    needs: run_tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Stage iac
+      run: mkdir -p ./drop/deployable && cp -r ./iac $_
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Stage extractor function
+      run: dotnet build ./source/ExtractorFunc -c Release -o '${{ github.workspace }}/drop/deployable/extractorfunc'
+    - name: Drop build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'delivery-${{ github.run_id }}'
+        path: ${{ github.workspace }}/drop/deployable
