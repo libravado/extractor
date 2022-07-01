@@ -1,0 +1,25 @@
+name: test
+on:
+  pull_request:
+    paths:
+    - source/**
+  workflow_call:
+jobs:
+  build_test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Run tests
+      run: |
+        cd ./source/ExtractorFunc
+        dotnet tool restore
+        dotnet test --collect:"XPlat Code Coverage"
+        dotnet reportgenerator -targetdir:'${{ github.workspace }}/drop/coveragereport' -reports:**/coverage.cobertura.xml -reporttypes:"html"
+    - name: Drop artifact - coveragereport
+      uses: actions/upload-artifact@v3
+      with:
+        name: coveragereport
+        path: ${{ github.workspace }}/drop/coveragereport
