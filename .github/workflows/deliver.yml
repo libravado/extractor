@@ -29,5 +29,5 @@ jobs:
   run_deployment:
     uses: ./.github/workflows/deploy.yml
     with:
-      delivery: ${{ github.run_number }}
+      delivery: ${{ fromJson(github.run_number) }}
       environment: dev
