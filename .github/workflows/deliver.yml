@@ -29,6 +29,7 @@ jobs:
         name: 'delivery-${{ github.run_number }}'
         path: ${{ github.workspace }}/drop/deployable
   run_deployment:
+    needs: gather_deployables
     uses: ./.github/workflows/deploy.yml
     with:
       delivery: ${{ fromJson(github.run_number) }}
