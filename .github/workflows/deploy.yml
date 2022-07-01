@@ -1,4 +1,4 @@
-name: CD Extractor Func
+name: deploy
 on:
   workflow_call:
     inputs:
@@ -31,5 +31,6 @@ jobs:
         workflow: deliver.yml
         branch: main
         run_number: ${{ github.event.inputs.delivery }}
+        name: 'delivery-${{ github.event.inputs.delivery }}'
         path: delivery
     

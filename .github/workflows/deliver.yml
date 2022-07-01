@@ -21,5 +21,10 @@ jobs:
     - name: Drop build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: 'delivery-${{ github.run_id }}'
+        name: 'delivery-${{ github.run_number }}'
         path: ${{ github.workspace }}/drop/deployable
+  run_deployment:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      delivery: ${{ github.run_number }}
+      environment: dev
