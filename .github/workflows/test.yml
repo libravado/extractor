@@ -1,6 +1,6 @@
 name: test
 on:
-  pr:
+  pull_request:
     paths:
     - source/**
   workflow_call:
