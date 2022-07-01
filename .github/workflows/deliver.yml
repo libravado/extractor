@@ -6,6 +6,8 @@ on:
     paths:
     - iac/**
     - source/**
+  # testing purposes: shouldnt need workflow_dispatch at all! :D
+  workflow_dispatch:
 jobs:
   run_tests:
     uses: ./.github/workflows/test.yml
