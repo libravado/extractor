@@ -1,15 +1,5 @@
 name: deploy
 on:
-  workflow_call:
-    inputs:
-      delivery:
-        description: Delivery ref no.
-        type: number
-        required: true
-      environment:
-        description: Environment prefix
-        type: string
-        required: true
   workflow_dispatch:
     inputs:
       delivery:
@@ -20,9 +10,12 @@ on:
         description: Environment prefix
         type: string
         required: true
+      ci_call:
+        type: boolean
+        default: false
 jobs:
   fetch_prior_deployables:
-    if: github.event_name == 'workflow_dispatch'
+    if: !inputs.ci_call
     runs-on: ubuntu-latest
     steps:
     - name: Download prior artifact
@@ -36,7 +29,7 @@ jobs:
         name: 'delivery-${{ inputs.delivery }}'
         path: delivery
   fetch_ci_deployables:
-    if: github.event_name == 'workflow_call'
+    if: inputs.ci_call
     runs-on: ubuntu-latest
     steps:
     - name: Download current artifact
