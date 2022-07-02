@@ -25,7 +25,7 @@ on:
         required: true
 jobs:
   fetch_prior_deployables:
-    if: !inputs.ci_call
+    if: inputs.ci_call != true
     runs-on: ubuntu-latest
     steps:
     - name: Download prior artifact
@@ -39,7 +39,7 @@ jobs:
         name: 'delivery-${{ inputs.delivery }}'
         path: delivery
   fetch_ci_deployables:
-    if: inputs.ci_call
+    if: inputs.ci_call == true
     runs-on: ubuntu-latest
     steps:
     - name: Download current artifact
