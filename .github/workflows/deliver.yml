@@ -34,4 +34,3 @@ jobs:
     with:
       delivery: ${{ fromJson(github.run_number) }}
       environment: dev
-      ci_call: true

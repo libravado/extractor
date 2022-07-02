@@ -1,6 +1,6 @@
 name: deploy
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       delivery:
         description: Delivery ref no.
@@ -12,7 +12,17 @@ on:
         required: true
       ci_call:
         type: boolean
-        default: false
+        default: true
+  workflow_dispatch:
+    inputs:
+      delivery:
+        description: Delivery ref no.
+        type: number
+        required: true
+      environment:
+        description: Environment prefix
+        type: string
+        required: true
 jobs:
   fetch_prior_deployables:
     if: !inputs.ci_call
