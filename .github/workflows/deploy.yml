@@ -21,18 +21,28 @@ on:
         type: string
         required: true
 jobs:
-  fetch_deployables:
+  fetch_prior_deployables:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-    - name: Download artifact
+    - name: Download prior artifact
       # https://github.com/dawidd6/action-download-artifact
       uses: dawidd6/action-download-artifact@v2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         workflow: deliver.yml
-        workflow_conclusion: in_progress # or success if dispatch
         branch: main
         run_number: ${{ inputs.delivery }}
         name: 'delivery-${{ inputs.delivery }}'
         path: delivery
-    
+  fetch_ci_deployables:
+    if: github.event_name == 'workflow_call'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download current artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: 'delivery-${{ inputs.delivery }}'
+        path: delivery
+        
+  
