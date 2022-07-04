@@ -24,7 +24,7 @@ on:
         type: string
         required: true
 jobs:
-  deploy_from_prior:
+  catalog_deploy:
     if: inputs.ci_call != true
     runs-on: ubuntu-latest
     steps:
@@ -37,10 +37,9 @@ jobs:
         branch: main
         run_number: ${{ inputs.delivery }}
         path: deliverable
-        skip_unpack: true
     - name: Inspect (THIS IS A TEST!)
       run: cd deliverable && ls
-  deploy_from_current:
+  ci_deploy:
     if: inputs.ci_call == true
     runs-on: ubuntu-latest
     steps:
