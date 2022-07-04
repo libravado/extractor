@@ -24,11 +24,11 @@ on:
         type: string
         required: true
 jobs:
-  fetch_deployables:
+  deploy_from_prior:
+    if: inputs.ci_call != true
     runs-on: ubuntu-latest
     steps:
-    - name: Download artifacts from the original delivery
-      if: inputs.ci_call != true
+    - name: Retrieve all deliverables
       # https://github.com/dawidd6/action-download-artifact
       uses: dawidd6/action-download-artifact@v2
       with:
@@ -38,23 +38,21 @@ jobs:
         run_number: ${{ inputs.delivery }}
         path: deliverable
         skip_unpack: true
-    - name: Download iac artifact from current
-      if: inputs.ci_call == true
+    - name: Inspect (THIS IS A TEST!)
+      run: cd deliverable && ls
+  deploy_from_current:
+    if: inputs.ci_call == true
+    runs-on: ubuntu-latest
+    steps:
+    - name: Retrieve iac deliverables
       uses: actions/download-artifact@v3
       with:
         name: 'iac-${{ inputs.delivery }}'
         path: deliverable/iac-${{ inputs.delivery }}
-    - name: Download source artifact from current
-      if: inputs.ci_call == true
+    - name: Retrieve source deliverables
       uses: actions/download-artifact@v3
       with:
         name: 'source-${{ inputs.delivery }}'
         path: deliverable/source-${{ inputs.delivery }}
-  deploy_iac:
-    needs: fetch_deployables
-    runs-on: ubuntu-latest
-    steps:
-    - name: test
-      run: |
-        cd deliverable
-        dir
+    - name: Inspect (THIS IS A TEST!)
+      run: cd deliverable && ls
