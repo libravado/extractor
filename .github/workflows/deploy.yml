@@ -66,16 +66,21 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          const sodium = require('tweetsodium');
+
+          # const sodium = require('tweetsodium');
+
           const owner = context.repo.owner, repo = context.repo.repo;
           const pubKeyResult = await github.rest.actions.getRepoPublicKey({ owner, repo });
-          const value = '${{ env.SHA_IAC_BICEP }}';
+          const secret = encrypt('${{ env.SHA_IAC_BICEP }}', pubKeyResult.key);
+
           const key_id = pubKeyResult.key_id;
           const secret_name = 'SHA_IAC_BICEP_${{ inputs.environment }}'.toUpper();
+          await github.rest.actions.createOrUpdateRepoSecret({ owner, repo, secret_name, encrypted_value, key_id });
 
-          const messageBytes = Buffer.from(value);
-          const keyBytes = Buffer.from(pubKeyResult.key, 'base64');
-          const encryptedBytes = sodium.seal(messageBytes, keyBytes);
-          const encrypted_value = Buffer.from(encryptedBytes).toString('base64');
-
-          const result = await github.rest.actions.createOrUpdateRepoSecret({ owner, repo, secret_name, encrypted_value, key_id });
+          function encrypt(value, base64Key) {
+            # const messageBytes = Buffer.from(value);
+            # const keyBytes = Buffer.from(base64Key, 'base64');
+            # const encryptedBytes = sodium.seal(messageBytes, keyBytes);
+            # return Buffer.from(encryptedBytes).toString('base64');
+            return 'helloooo';
+          }
