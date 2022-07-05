@@ -55,5 +55,27 @@ jobs:
         path: deliverable
     - name: Get shas
       run: |
-        sha256sum deliverable/iac/bicep.tar.gz
-        sha256sum deliverable/source/extractor.tar.gz
+        echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.tar.gz) >> $GITHUB_ENV
+        echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.tar.gz) >> $GITHUB_ENV
+    # TODO: For each tar file present:
+    # - Get last-deployed sha for the supplied environment (using action secrets)
+    # - If delivery sha is same then skip, otherwise:
+    #    --> run deployment
+    #    --> set new environment sha
+    - name: Set environment sha
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const sodium = require('tweetsodium');
+          const owner = context.repo.owner, repo = context.repo.repo;
+          const pubKeyResult = await github.rest.actions.getRepoPublicKey({ owner, repo });
+          const value = '${{ env.SHA_IAC_BICEP }}';
+          const key_id = pubKeyResult.key_id;
+          const secret_name = 'SHA_IAC_BICEP_${{ inputs.environment }}'.toUpper();
+
+          const messageBytes = Buffer.from(value);
+          const keyBytes = Buffer.from(pubKeyResult.key, 'base64');
+          const encryptedBytes = sodium.seal(messageBytes, keyBytes);
+          const encrypted_value = Buffer.from(encryptedBytes).toString('base64');
+
+          const result = await github.rest.actions.createOrUpdateRepoSecret({ owner, repo, secret_name, encrypted_value, key_id });
