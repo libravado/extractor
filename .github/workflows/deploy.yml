@@ -53,9 +53,7 @@ jobs:
       with:
         name: 'delivery-${{ inputs.delivery }}'
         path: deliverable
-
-
-    - name: Inspect IaC (THIS IS A TEST!)
-      run: cd deliverable/iac && ls
-    - name: Inspect Source (THIS IS A TEST!)
-      run: cd deliverable/source && ls
+    - name: Get shas
+      run: |
+        sha256sum deliverable/iac/bicep.tar.gz
+        sha256sum deliverable/source/extractor.tar.gz
