@@ -71,7 +71,7 @@ jobs:
       run: |
         map={}
         if [ '${{ steps.get_map.outcome }}' == 'success' ]; then
-          map=$(<deployment_map/map.json)
+          map=$(<deployment_map/deployment_map.json)
         fi
         echo "::set-output name=map::$map"
     - name: Merge deployment map
