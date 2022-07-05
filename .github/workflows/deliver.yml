@@ -16,23 +16,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Stage bicep file(s)
-      run: mkdir -p ./drop/deployable && cp -r ./iac $_
-    - name: Drop all iac
-      uses: actions/upload-artifact@v3
-      with:
-        name: 'iac-${{ github.run_number }}'
-        path: ${{ github.workspace }}/drop/deployable/iac
+    - name: Generate iac tar (bicep)
+      run: mkdir -p ./drop/deliverable/iac && tar cfvz $_/bicep.tar.gz ./iac
     - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
-    - name: Stage extractor function
-      run: dotnet build ./source/ExtractorFunc -c Release -o '${{ github.workspace }}/drop/deployable/source/extractorfunc'
-    - name: Drop all source
+    - name: Publish source (extractor func)
+      run: dotnet build ./source/ExtractorFunc -c Release -o '${{ runner.temp }}/extractorfunc'
+    - name: Generate source tar (extractor func)
+      run: mkdir -p ./drop/deliverable/source && tar cfvz $_/extractor.tar.gz '${{ runner.temp }}/extractorfunc'
+    - name: Upload deliverables
       uses: actions/upload-artifact@v3
       with:
-        name: 'source-${{ github.run_number }}'
-        path: ${{ github.workspace }}/drop/deployable/source
+        name: 'delivery-${{ github.run_number }}'
+        path: ${{ github.workspace }}/drop/deliverable
   call_deploy:
     needs: deliver
     uses: ./.github/workflows/deploy.yml
