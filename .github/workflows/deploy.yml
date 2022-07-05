@@ -24,11 +24,11 @@ on:
         type: string
         required: true
 jobs:
-  retrieve_delivery:
-    if: inputs.ci_call != true
+  check_delivery:
     runs-on: ubuntu-latest
     steps:
     - name: Retrieve catalog delivery
+      if: inputs.ci_call != true
       # https://github.com/dawidd6/action-download-artifact
       uses: dawidd6/action-download-artifact@v2
       with:
@@ -39,12 +39,13 @@ jobs:
         name: 'delivery-${{ inputs.delivery }}'
         path: deliverable
     - name: Re-up delivery from catalog -> current
+      if: inputs.ci_call != true
       uses: actions/upload-artifact@v3
       with:
         name: 'delivery-${{ inputs.delivery }}'
         path: deliverable
   deploy:
-    needs: retrieve_delivery
+    needs: check_delivery
     runs-on: ubuntu-latest
     steps:
     - name: Get deliverables
