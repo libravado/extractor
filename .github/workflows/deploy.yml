@@ -70,7 +70,7 @@ jobs:
     - id: read_map
       run: |
         map={}
-        if [ '${{ steps.get_map.outcome }}' == 'success']; then
+        if [ '${{ steps.get_map.outcome }}' == 'success' ]; then
           map=$(<deployment_map/map.json)
         fi
         echo "::set-output name=map::$map"
