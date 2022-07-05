@@ -17,14 +17,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Generate iac tar (bicep)
-      run: mkdir -p ./drop/deliverable/iac && tar cfvz $_/bicep.tar.gz ./iac
+      run: mkdir -p ./drop/deliverable/iac && tar cfz $_/bicep.tar.gz ./iac
     - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
     - name: Publish source (extractor func)
       run: dotnet build ./source/ExtractorFunc -c Release -o '${{ runner.temp }}/extractorfunc'
     - name: Generate source tar (extractor func)
-      run: mkdir -p ./drop/deliverable/source && tar cfvz $_/extractor.tar.gz '${{ runner.temp }}/extractorfunc'
+      run: mkdir -p ./drop/deliverable/source && tar cfz $_/extractor.tar.gz '${{ runner.temp }}/extractorfunc'
     - name: Upload deliverables
       uses: actions/upload-artifact@v3
       with:

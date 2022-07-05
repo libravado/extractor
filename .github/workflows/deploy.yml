@@ -57,18 +57,26 @@ jobs:
       run: |
         echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.tar.gz) >> $GITHUB_ENV
         echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.tar.gz) >> $GITHUB_ENV
-    # TODO: For each tar file present:
-    # - Get last-deployed sha for the supplied environment (using action secrets)
-    # - If delivery sha is same then skip, otherwise:
-    #    --> run deployment
-    #    --> set new environment sha
-    - name: Set environment sha
+    - id: get_map
+      continue-on-error: true
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        workflow: deploy.yml
+        workflow_conclusion: success
+        branch: main
+        name: deployment_map
+        path: deployment_map
+    - name: read_map
+      run: |
+        map={}
+        if [ '${{ steps.get_map.outcome }}' == 'success']; then
+          map={ "dev": "123" }
+        fi
+        echo "::set-output name=map::$($map)"
+    - name: Merge deployment map
       uses: actions/github-script@v6
       with:
         script: |
-          const owner = context.repo.owner, repo = context.repo.repo;
-          const pubKeyResult = await github.rest.actions.getRepoPublicKey({ owner, repo });
-          const key_id = pubKeyResult.key_id;
-          const secret_name = 'SHA_IAC_BICEP_${{ inputs.environment }}'.toUpper();
-          const encrypted_value = 'woozlewuzzle';
-          await github.rest.actions.createOrUpdateRepoSecret({ owner, repo, secret_name, encrypted_value, key_id });
+          let og = JSON.parse('${{ steps.read_map.outputs.map }}');
+          return { ...og, staging: "789" };
