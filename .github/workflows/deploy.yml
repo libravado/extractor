@@ -84,7 +84,7 @@ jobs:
             'iac_bicep': '${{ env.SHA_IAC_BICEP }}',
             'src_extractor': '${{ env.SHA_SRC_EXTRACTOR }}'
           }};
-          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/deployment_map.json`, Buffer.from(merged));
+          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/deployment_map.json`, Buffer.from(JSON.stringify(merged)));
     - name: Upload deployment map
       uses: actions/upload-artifact@v3
       with:
