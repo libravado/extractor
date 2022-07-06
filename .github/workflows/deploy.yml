@@ -24,20 +24,33 @@ on:
         type: string
         required: true
 jobs:
-  deploy:
+  check_delivery:
     runs-on: ubuntu-latest
-    env:
-      DELIVERY_WF_STATUS: ${{ inputs.ci_call == true && 'completed' || 'success' }}
-      DELIVERY_WF_RUN_NO: ${{ inputs.ci_call == true && '' || inputs.delivery }}
     steps:
     - name: Retrieve catalog delivery
-      uses: dawidd6/action-download-artifact@v2 # https://github.com/dawidd6/action-download-artifact
+      if: inputs.ci_call != true
+      # https://github.com/dawidd6/action-download-artifact
+      uses: dawidd6/action-download-artifact@v2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         workflow: deliver.yml
-        workflow_conclusion: ${{ env.DELIVERY_WF_STATUS }}
         branch: main
-        run_number: ${{ env.DELIVERY_WF_RUN_NO }}
+        run_number: ${{ inputs.delivery }}
+        name: 'delivery-${{ inputs.delivery }}'
+        path: deliverable
+    - name: Re-up delivery from catalog -> current
+      if: inputs.ci_call != true
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'delivery-${{ inputs.delivery }}'
+        path: deliverable
+  deploy:
+    needs: check_delivery
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get deliverables
+      uses: actions/download-artifact@v3
+      with:
         name: 'delivery-${{ inputs.delivery }}'
         path: deliverable
     - name: Get shas
@@ -72,7 +85,7 @@ jobs:
             'src_extractor': '${{ env.SHA_SRC_EXTRACTOR }}'
           }};
           fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/deployment_map.json`, Buffer.from(JSON.stringify(merged)));
-    - name: Upload merged map
+    - name: Upload deployment map
       uses: actions/upload-artifact@v3
       with:
         name: deployment_map
