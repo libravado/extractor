@@ -27,7 +27,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      DELIVERY_WF_STATUS: ${{ inputs.ci_call == true && 'in_progress' || 'success' }}
+      DELIVERY_WF_STATUS: ${{ inputs.ci_call == true && 'completed' || 'success' }}
       DELIVERY_WF_RUN_NO: ${{ inputs.ci_call == true && '' || inputs.delivery }}
     steps:
     - name: Retrieve catalog delivery
