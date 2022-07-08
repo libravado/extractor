@@ -82,10 +82,10 @@ jobs:
     
     # Deploy iac/bicep
     - name: Deploy iac/bicep [1] - extract
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != SHA_IAC_BICEP
+      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       run: tar xfz deliverable/iac/bicep.tar.gz
     - name: Deploy iac/bicep [2] - deploy from template
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != SHA_IAC_BICEP
+      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       uses: azure/arm-deploy@v1
       with:
         subscriptionId: ${{ secrets.AZURE_SUB_ID }}
