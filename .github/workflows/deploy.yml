@@ -24,20 +24,38 @@ on:
         type: string
         required: true
 jobs:
+  check_delivery:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Retrieve catalog delivery
+      if: inputs.ci_call != true
+      # https://github.com/dawidd6/action-download-artifact
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        workflow: deliver.yml
+        branch: main
+        run_number: ${{ inputs.delivery }}
+        name: 'delivery-${{ inputs.delivery }}'
+        path: deliverable
+    - name: Re-up delivery from catalog -> current
+      if: inputs.ci_call != true
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'delivery-${{ inputs.delivery }}'
+        path: deliverable
   deploy:
+    needs: check_delivery
     runs-on: ubuntu-latest
     steps:
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_SCM_CREDS }}
-    - name: Retrieve catalog delivery
-      uses: dawidd6/action-download-artifact@v2 # https://github.com/dawidd6/action-download-artifact
+    - name: Upgrade AZ Bicep
+      run: az bicep upgrade
+    - name: Get deliverables
+      uses: actions/download-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        workflow: deliver.yml
-        workflow_conclusion: ${{ inputs.ci_call == true && 'in_progress' || 'success' }}
-        branch: main
-        run_number: ${{ inputs.delivery }}
         name: 'delivery-${{ inputs.delivery }}'
         path: deliverable
     - name: Get shas
