@@ -27,6 +27,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_SCM_CREDS }}
     - name: Retrieve catalog delivery
       uses: dawidd6/action-download-artifact@v2 # https://github.com/dawidd6/action-download-artifact
       with:
