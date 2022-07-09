@@ -33,6 +33,7 @@ jobs:
   call_deploy:
     needs: deliver
     uses: ./.github/workflows/deploy.yml
+    secrets: inherit
     with:
       delivery: ${{ fromJson(github.run_number) }}
       environment: dev
