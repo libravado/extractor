@@ -34,7 +34,7 @@ jobs:
         workflow: deliver.yml
         workflow_conclusion: ${{ inputs.ci_call == true && 'in_progress' || 'success' }}
         branch: main
-        run_number: inputs.delivery
+        run_number: ${{ inputs.delivery }}
         name: 'delivery-${{ inputs.delivery }}'
         path: deliverable
     - name: Get shas
@@ -42,6 +42,7 @@ jobs:
         echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.tar.gz) >> $GITHUB_ENV
         echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.tar.gz) >> $GITHUB_ENV
     - id: get_map
+      name: Get map
       continue-on-error: true
       uses: dawidd6/action-download-artifact@v2
       with:
@@ -52,8 +53,9 @@ jobs:
         name: deployment_map
         path: deployment_map
     - id: read_map
+      name: Read map
       run: |
-        map={ '${{ inputs.environment }}': { } }
+        map="{ '${{ inputs.environment }}': { } }"
         if [ '${{ steps.get_map.outcome }}' == 'success' ]; then
           map=$(<deployment_map/deployment_map.json)
         fi
