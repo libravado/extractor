@@ -85,14 +85,14 @@ jobs:
     # Deploy iac/bicep
     - name: Deploy iac/bicep [1] - extract
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
-      run: tar xfz deliverable/iac/bicep.tar.gz
+      run: mkdir -p extract/iac && tar xfz deliverable/iac/bicep.tar.gz -C $_
     - name: Deploy iac/bicep [2] - deploy from template
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       uses: azure/arm-deploy@v1
       with:
         subscriptionId: ${{ secrets.AZURE_SUB_ID }}
         resourceGroupName: ${{ inputs.environment }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
-        template: deliverable/iac/main.bicep
+        template: extract/iac/main.bicep
         parameters:
           sqlConnection=blort-sql
           appInsightsConnection=${{ secrets.AZURE_INSIGHTS }}
