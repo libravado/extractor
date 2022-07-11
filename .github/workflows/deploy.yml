@@ -9,7 +9,7 @@ on:
       environment:
         description: Environment prefix
         type: string
-        required: true
+        required: true # OPTIONS: DEV
       ci_call:
         type: boolean
         default: true
@@ -22,7 +22,7 @@ on:
       environment:
         description: Environment prefix
         type: string
-        required: true
+        required: true # OPTIONS: TEST, UAT, PROD
 jobs:
   check_delivery:
     runs-on: ubuntu-latest
@@ -68,9 +68,10 @@ jobs:
       uses: dawidd6/action-download-artifact@v2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        workflow: deploy.yml
+        workflow: ${{ inputs.ci_call == true && 'deliver.yml' || 'deploy.yml' }}
         workflow_conclusion: success
         branch: main
+        run_number: ${{ inputs.ci_call == true && inputs.delivery || '' }}
         name: deployment_map
         path: deployment_map
     - id: read_map
