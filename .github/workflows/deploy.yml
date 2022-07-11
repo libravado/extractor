@@ -105,7 +105,7 @@ jobs:
       with:
         script: |
           const fs = require('fs');
-          const og = JSON.parse('${{ steps.read_map.outputs.map }}');
+          const og = ${{ toJSON(steps.read_map.outputs.map) }};
           const merged = { ...og, '${{ inputs.environment }}': {
             'iac_bicep': '${{ env.SHA_IAC_BICEP }}',
             'src_extractor': '${{ env.SHA_SRC_EXTRACTOR }}'
