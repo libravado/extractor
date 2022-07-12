@@ -87,7 +87,10 @@ jobs:
       run: echo "Thumbprint changed? ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}' }}"
     - name: Deploy iac/bicep [1] - extract
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
-      run: mkdir -p extract/iac && unzip -q deliverable/iac/bicep.zip -d $_
+      run: |
+        mkdir -p extract/iac && unzip deliverable/iac/bicep.zip -d $_
+        cd extract/iac
+        ls
     - name: Deploy iac/bicep [2] - deploy from template
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       uses: azure/arm-deploy@v1
