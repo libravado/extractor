@@ -82,7 +82,7 @@ jobs:
           map=$(<deployment_map/deployment_map.json)
         fi
         echo "::set-output name=map::$map"
-        echo "map: $map"
+        expr length $map
     # Deploy iac/bicep
     - name: Deploy iac/bicep [1] - extract
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
@@ -107,10 +107,16 @@ jobs:
         script: |
           const fs = require('fs');
           const og = ${{ toJson(steps.read_map.outputs.map) }};
+
+          console.log(JSON.stringify(og).length);
+
           const merged = { ...og, ${{ inputs.environment }}: {
             'iac_bicep': '${{ env.SHA_IAC_BICEP }}',
             'src_extractor': '${{ env.SHA_SRC_EXTRACTOR }}'
           }};
+
+          console.log(JSON.stringify(merged).length);
+
           fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/deployment_map.json`, Buffer.from(JSON.stringify(merged)));
     - name: Upload deployment map
       uses: actions/upload-artifact@v3
