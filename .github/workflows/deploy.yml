@@ -60,8 +60,8 @@ jobs:
         path: deliverable
     - name: Get shas
       run: |
-        echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.tar.gz | cut -b 1-64) >> $GITHUB_ENV
-        echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.tar.gz | cut -b 1-64) >> $GITHUB_ENV
+        echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.zip | cut -b 1-64) >> $GITHUB_ENV
+        echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.zip | cut -b 1-64) >> $GITHUB_ENV
     - id: get_map
       name: Get map
       continue-on-error: true
@@ -87,7 +87,7 @@ jobs:
       run: echo "Thumbprint changed? ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}' }}"
     - name: Deploy iac/bicep [1] - extract
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
-      run: mkdir -p extract/iac && tar xfz deliverable/iac/bicep.tar.gz -C $_
+      run: mkdir -p extract/iac && unzip -q deliverable/iac/bicep.zip -d $_
     - name: Deploy iac/bicep [2] - deploy from template
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       uses: azure/arm-deploy@v1
