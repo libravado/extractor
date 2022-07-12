@@ -60,8 +60,8 @@ jobs:
         path: deliverable
     - name: Get shas
       run: |
-        echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.tar.gz) >> $GITHUB_ENV
-        echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.tar.gz) >> $GITHUB_ENV
+        echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.tar.gz | cut -b 1-64) >> $GITHUB_ENV
+        echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.tar.gz | cut -b 1-64) >> $GITHUB_ENV
     - id: get_map
       name: Get map
       continue-on-error: true
@@ -106,8 +106,8 @@ jobs:
       with:
         script: |
           const fs = require('fs');
-          const og = ${{ toJSON(steps.read_map.outputs.map) }};
-          const merged = { ...og, '${{ inputs.environment }}': {
+          const og = ${{ toJson(steps.read_map.outputs.map) }};
+          const merged = { ...og, ${{ toJson(inputs.environment) }}: {
             'iac_bicep': '${{ env.SHA_IAC_BICEP }}',
             'src_extractor': '${{ env.SHA_SRC_EXTRACTOR }}'
           }};
