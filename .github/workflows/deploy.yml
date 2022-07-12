@@ -71,7 +71,6 @@ jobs:
         workflow: ${{ inputs.ci_call != true && 'deploy.yml' || 'deliver.yml' }}
         workflow_conclusion: success
         branch: main
-        run_number: ${{ inputs.ci_call != true && inputs.delivery || '' }}
         name: ${{ inputs.ci_call != true && 'deployment_map' || 'deployment_map_ci' }}
         path: deployment_map
     - id: read_map
