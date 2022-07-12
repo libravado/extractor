@@ -86,9 +86,9 @@ jobs:
     # Deploy iac/bicep
     - name: Deploy iac/bicep [0] - confirm
       run: |
-      echo ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep }}
-      echo ${{ env.SHA_IAC_BICEP }}
-      echo "is different?: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}' }}"
+        echo ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep }}
+        echo ${{ env.SHA_IAC_BICEP }}
+        echo "is different?: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}' }}"
     - name: Deploy iac/bicep [1] - extract
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       run: mkdir -p extract/iac && tar xfz deliverable/iac/bicep.tar.gz -C $_
