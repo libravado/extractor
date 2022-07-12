@@ -60,8 +60,8 @@ jobs:
         path: deliverable
     - name: Get shas
       run: |
-        echo SHA_IAC_BICEP=$(sha256sum deliverable/iac/bicep.zip | cut -b 1-64) >> $GITHUB_ENV
-        echo SHA_SRC_EXTRACTOR=$(sha256sum deliverable/source/extractor.zip | cut -b 1-64) >> $GITHUB_ENV
+        echo SHA_IAC_BICEP=$(sha256sum <(find ./deliverable/iac/bicep -type f -exec sha256sum {} +) | cut -b 1-64) >> $GITHUB_ENV
+        echo SHA_SRC_EXTRACTOR=$(sha256sum <(find ./deliverable/source/extractor -type f -exec sha256sum {} +) | cut -b 1-64) >> $GITHUB_ENV
     - id: get_map
       name: Get map
       continue-on-error: true
@@ -83,12 +83,10 @@ jobs:
         echo "::set-output name=map::$map"
 
     # Deploy iac/bicep
-    - name: Deploy iac/bicep [0] - confirm
-      run: echo "Thumbprint changed? ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}' }}"
-    - name: Deploy iac/bicep [1] - extract
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
-      run: mkdir -p extract && unzip deliverable/iac/bicep.zip -d $_
-    - name: Deploy iac/bicep [2] - deploy from template
+    - name: iac/bicep not changed -- Skip
+      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep == '${{ env.SHA_IAC_BICEP }}'
+      run: echo "${{ inputs.environment }} SHAs match. Skipping deployment"
+    - name: iac/bicep changed -- Deploy
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       uses: azure/arm-deploy@v1
       with:
