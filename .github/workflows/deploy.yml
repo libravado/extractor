@@ -82,40 +82,32 @@ jobs:
           map=$(<deployment_map/deployment_map.json)
         fi
         echo "::set-output name=map::$map"
-        expr length "$map"
     # Deploy iac/bicep
     - name: Deploy iac/bicep [0] - confirm
-      run: |
-        echo ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep }}
-        echo ${{ env.SHA_IAC_BICEP }}
-        echo "is different?: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}' }}"
+      run: echo "Thumbprint changed?: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}' }}"
     - name: Deploy iac/bicep [1] - extract
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
       run: mkdir -p extract/iac && tar xfz deliverable/iac/bicep.tar.gz -C $_
-    - name: Deploy iac/bicep [2] - deploy from template
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
-      uses: azure/arm-deploy@v1
-      with:
-        subscriptionId: ${{ secrets.AZURE_SUB_ID }}
-        resourceGroupName: ${{ inputs.environment }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
-        template: extract/iac/main.bicep
-        parameters:
-          sqlConnection=blort-sql
-          appInsightsConnection=${{ secrets.AZURE_INSIGHTS }}
-          sourceDocsStorageAccountName=${{ inputs.environment }}stgsharedweu
-          exportBlobStorageAccountName=${{ inputs.environment }}stgsharedweu
-          exportBlobContainerName=export
+    # - name: Deploy iac/bicep [2] - deploy from template
+    #   if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
+    #   uses: azure/arm-deploy@v1
+    #   with:
+    #     subscriptionId: ${{ secrets.AZURE_SUB_ID }}
+    #     resourceGroupName: ${{ inputs.environment }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
+    #     template: extract/iac/main.bicep
+    #     parameters:
+    #       sqlConnection=blort-sql
+    #       appInsightsConnection=${{ secrets.AZURE_INSIGHTS }}
+    #       sourceDocsStorageAccountName=${{ inputs.environment }}stgsharedweu
+    #       exportBlobStorageAccountName=${{ inputs.environment }}stgsharedweu
+    #       exportBlobContainerName=export
 
     - name: Merge deployment map
       uses: actions/github-script@v6
       with:
         script: |
           const fs = require('fs');
-          const og = ${{ toJson(steps.read_map.outputs.map) }};
-
-          console.log(JSON.stringify(og).length);
-
-          const merged = { ...og, ${{ inputs.environment }}: {
+          const merged = { ...${{ steps.read_map.outputs.map }}, ${{ inputs.environment }}: {
             'iac_bicep': '${{ env.SHA_IAC_BICEP }}',
             'src_extractor': '${{ env.SHA_SRC_EXTRACTOR }}'
           }};
