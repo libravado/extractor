@@ -16,14 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Generate iac tar (bicep)
+    - name: Generate iac archive (bicep)
       run: mkdir -p ./drop/deliverable/iac && zip -qrX $_/bicep.zip ./iac
     - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
     - name: Publish source (extractor func)
       run: dotnet build ./source/ExtractorFunc -c Release -o '${{ runner.temp }}/extractorfunc'
-    - name: Generate source tar (extractor func)
+    - name: Generate source archive (extractor func)
       run: mkdir -p ./drop/deliverable/source && zip -qrX $_/extractor.zip '${{ runner.temp }}/extractorfunc'
     - name: Upload deliverables
       uses: actions/upload-artifact@v3
