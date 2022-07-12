@@ -77,7 +77,7 @@ jobs:
     - id: read_map
       name: Read map
       run: |
-        map="{ '${{ inputs.environment }}': { } }"
+        map="{ ${{ toJson(inputs.environment) }}: { } }"
         if [ '${{ steps.get_map.outcome }}' == 'success' ]; then
           map=$(<deployment_map/deployment_map.json)
         fi
