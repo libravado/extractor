@@ -85,11 +85,11 @@ jobs:
         echo "::set-output name=map::$map"
 
     # Deploy iac/bicep
-    - name: iac/bicep test logging
+    - name: Deployable iac/bicep - check for changes
       run: |
         echo "oldsha: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep }}"
         echo "newsha: ${{ env.SHA_IAC_BICEP }}"
-    - name: iac/bicep changed
+    - name: Deployable iac/bicep - deploy (if changed)
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != env.SHA_IAC_BICEP
       uses: azure/arm-deploy@v1
       with:
@@ -103,7 +103,24 @@ jobs:
           exportBlobStorageAccountName=${{ inputs.environment }}stgsharedweu
           exportBlobContainerName=export
 
-    # Deploy source/extractor... TODO
+    # Deploy source/extractor
+    - name: Deployable source/extractor - check for changes
+      run: |
+        echo "oldsha: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor }}"
+        echo "newsha: ${{ env.SHA_SRC_EXTRACTOR }}"
+    - name: Deployable source/extractor - get publish profile (if changed)
+      if: fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor != env.SHA_SRC_EXTRACTOR
+      run: |
+        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
+        echo "::add-mask::$pubProfileXml"
+        echo PUB_PROFILE_XML=$pubProfileXml >> $GITHUB_ENV
+    - name: Deployable source/extractor - publish (if changed)
+      if: fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor != env.SHA_SRC_EXTRACTOR
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
+        package: extract/source/extractor
+        publish-profile: ${{ env.PUB_PROFILE_XML }}
 
     - name: Merge deployment map
       uses: actions/github-script@v6
