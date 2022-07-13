@@ -90,7 +90,7 @@ jobs:
         echo "oldsha: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep }}"
         echo "newsha: ${{ env.SHA_IAC_BICEP }}"
     - name: iac/bicep changed
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != '${{ env.SHA_IAC_BICEP }}'
+      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != env.SHA_IAC_BICEP
       uses: azure/arm-deploy@v1
       with:
         subscriptionId: ${{ secrets.AZURE_SUB_ID }}
