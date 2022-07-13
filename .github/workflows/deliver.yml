@@ -34,3 +34,5 @@ jobs:
     needs: deliver
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
+    with:
+      ci_call: true
