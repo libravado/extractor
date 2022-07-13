@@ -60,8 +60,8 @@ jobs:
         path: deliverable
     - name: Extract archives 4 SHAs
       run: |
-        mkdir -p extract/iac/bicep && tar -xfz deliverable/iac/bicep.tar.gz -C $_
-        mkdir -p extract/source/extractor && tar -xfz deliverable/source/extractor.tar.gz -C $_
+        mkdir -p extract/iac/bicep && tar xfz deliverable/iac/bicep.tar.gz -C $_
+        mkdir -p extract/source/extractor && tar xfz deliverable/source/extractor.tar.gz -C $_
         echo SHA_IAC_BICEP=$(sha256sum <(find ./extract/iac/bicep -type f -exec sha256sum {} +) | cut -b 1-64) >> $GITHUB_ENV
         echo SHA_SRC_EXTRACTOR=$(sha256sum <(find ./extract/source/extractor -type f -exec sha256sum {} +) | cut -b 1-64) >> $GITHUB_ENV
     - id: get_map
