@@ -111,14 +111,14 @@ jobs:
     - name: Deployable source/extractor - get publish profile (if changed)
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor != env.SHA_SRC_EXTRACTOR
       run: |
-        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g "${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
+        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g "${{ inputs.environment }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ inputs.environment }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
         echo "::add-mask::$pubProfileXml"
         echo PUB_PROFILE_XML=$pubProfileXml >> $GITHUB_ENV
     - name: Deployable source/extractor - publish (if changed)
       if: fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor != env.SHA_SRC_EXTRACTOR
       uses: Azure/functions-action@v1
       with:
-        app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
+        app-name: ${{ inputs.environment }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
         package: extract/source/extractor
         publish-profile: ${{ env.PUB_PROFILE_XML }}
 
