@@ -54,7 +54,7 @@ module extractorStorageAccountDeploy 'br:devacrsharedweu.azurecr.io/bicep/module
 }
 
 module extractorTriggerContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account-blob:v1' = {
-  name: 'triggerBlobStorageContainerDeploy'
+  name: 'extractorTriggerContainerDeploy'
   params: {
     containerName: 'wns-data-extract-trigger'
     publicAccess: false

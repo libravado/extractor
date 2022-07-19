@@ -95,8 +95,8 @@ jobs:
           sqlConnection=blort-sql
           appInsightsConnection=${{ secrets.AZURE_INSIGHTS }}
           sourceDocsStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
-          exportBlobStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
-          exportBlobContainerName=export
+          exportBlobStorageAccountName=${{ env.ENV_PREFIX }}stg${{ secrets.AZURE_WORKLOAD }}weu
+          exportBlobContainerName=wns-data-extract-export
 
     # Deploy source/extractor
     - name: Deployable source/extractor - check for changes
@@ -106,7 +106,7 @@ jobs:
     - name: Deployable source/extractor - get publish profile (if changed)
       if: fromJson(steps.read_map.outputs.map)[env.ENV_PREFIX].src_extractor != env.SHA_SRC_EXTRACTOR
       run: |
-        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g ${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }} -n "${{ inputs.environment }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
+        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g ${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }} -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
         echo "::add-mask::$pubProfileXml"
         echo PUB_PROFILE_XML=$pubProfileXml >> $GITHUB_ENV
     - name: Deployable source/extractor - publish (if changed)
