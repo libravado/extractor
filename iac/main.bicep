@@ -43,8 +43,8 @@ var tags = resourceGroup().tags
 // -----------------------------------------------------------------------------
 // Resources
 // -----------------------------------------------------------------------------
-module triggerBlobStorageAccountDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account:v1' = {
-  name: 'triggerBlobStorageAccountDeploy'
+module extractorStorageAccountDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account:v1' = {
+  name: 'extractorStorageAccountDeploy'
   params: {
     location: location
     prefix: prefix
@@ -53,12 +53,21 @@ module triggerBlobStorageAccountDeploy 'br:devacrsharedweu.azurecr.io/bicep/modu
   }
 }
 
-module triggerBlobStorageContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account-blob:v1' = {
+module extractorTriggerContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account-blob:v1' = {
   name: 'triggerBlobStorageContainerDeploy'
   params: {
     containerName: 'wns-data-extract-trigger'
-    publicAccess: true
-    storageAccountResourceName: triggerBlobStorageAccountDeploy.outputs.resourceName
+    publicAccess: false
+    storageAccountResourceName: extractorStorageAccountDeploy.outputs.resourceName
+  }
+}
+
+module extractorExportContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account-blob:v1' = {
+  name: 'extractorExportContainerDeploy'
+  params: {
+    containerName: 'wns-data-extract-export'
+    publicAccess: false
+    storageAccountResourceName: extractorStorageAccountDeploy.outputs.resourceName
   }
 }
 
@@ -97,7 +106,7 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
       }
       {
         name: 'AzureWebJobsStorage'
-        value: triggerBlobStorageAccountDeploy.outputs.primaryConnection
+        value: extractorStorageAccountDeploy.outputs.primaryConnection
       }
       {
         name: 'SourceDocsStorageAccountName'
@@ -113,7 +122,7 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
       }
       {
         name: 'TriggerBlobStorage__accountName'
-        value: triggerBlobStorageAccountDeploy.outputs.resourceName
+        value: extractorStorageAccountDeploy.outputs.resourceName
       }
       {
         name: 'ConnectionStrings__SourceDb'
@@ -127,11 +136,11 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
   }
 }
 
-// module functionAppBlobContributorRoleDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/security/sp-assign-sub-role:v1' = {
-//   name: 'functionAppBlobContributorRoleDeploy'
-//   scope: subscription()
-//   properties: {
-//     principalId: functionAppDeploy.outputs.resourcePrincipalId
-//     role: 'Storage Blob Data Contributor'
-//   }
-// }
+module functionAppBlobContributorRoleDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/security/sp-assign-sub-role:v1' = {
+  name: 'functionAppBlobContributorRoleDeploy'
+  scope: subscription()
+  params: {
+    principalId: functionAppDeploy.outputs.resourcePrincipalId
+    role: 'Storage Blob Data Contributor'
+  }
+}
