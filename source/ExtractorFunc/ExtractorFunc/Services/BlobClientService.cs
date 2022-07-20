@@ -26,7 +26,7 @@ public class BlobClientService : IBlobClientService
         => hostedAccountName == null
             ? new(DevConnection, containerName)
             : new(
-                new Uri(GetAccountUrl(hostedAccountName + "/" + containerName)),
+                new Uri(GetAccountUrl(hostedAccountName) + "/" + containerName),
                 new DefaultAzureCredential());
 
     /// <inheritdoc/>

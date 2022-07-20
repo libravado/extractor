@@ -60,7 +60,7 @@ public class BlobClientServiceTests
         var container = sut.GetContainer(containerName, "madeupaccount");
 
         // Assert
-        container.Uri.LocalPath.Should().EndWith(hostedSuffix);
-        container.Name.Should().Be($"{containerName}{hostedSuffix}");
+        container.Uri.ToString().Should().Be($"https://madeupaccount{hostedSuffix}/{containerName}");
+        container.Name.Should().Be(containerName);
     }
 }
