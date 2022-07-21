@@ -121,10 +121,6 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
         name: 'ExportBlobStorage__accountName'
         value: extractorStorageAccountDeploy.outputs.resourceName
       }
-      {
-        name: 'ConnectionStrings__SourceDb'
-        value: sqlConnection
-      }
     ]
     location: location
     prefix: prefix
