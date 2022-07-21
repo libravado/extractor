@@ -94,7 +94,7 @@ jobs:
         parameters:
           sqlConnection=blort-sql
           appInsightsConnection=${{ secrets.AZURE_INSIGHTS }}
-          sourceDocsStorageConnection=blort-sa
+          sourceDocsStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
           exportBlobContainerName=wns-data-extract-export
 
     # Deploy source/extractor

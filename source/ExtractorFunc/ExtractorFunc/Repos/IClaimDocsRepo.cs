@@ -12,5 +12,5 @@ public interface IClaimDocsRepo
     /// </summary>
     /// <param name="runConfig"></param>
     /// <returns>A list of claim documents.</returns>
-    public Task<List<ClaimDocument>> GetClaimDocumentsAync(RunConfig runConfig);
+    public Task<List<ClaimDocument>> GetClaimDocumentsAsync(RunConfig runConfig);
 }

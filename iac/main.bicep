@@ -13,9 +13,8 @@ param sqlConnection string
 @description('App insights connection string.')
 param appInsightsConnection string
 
-@description('Source storage account connection.')
-@secure()
-param sourceDocsStorageConnection string
+@description('Source storage account name.')
+param sourceDocsStorageAccountName string
 
 @description('The container name for export blobs.')
 param exportBlobContainerName string
@@ -107,20 +106,24 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
         value: sqlConnection
       }
       {
-        name: 'ConnectionStrings__SourceDocsBlobStorage'
-        value: sourceDocsStorageConnection
-      }
-      {
         name: 'AzureWebJobsStorage'
         value: extractorStorageAccountDeploy.outputs.primaryConnection
+      }
+      {
+        name: 'SourceDocsStorageAccountName'
+        value: sourceDocsStorageAccountName
       }
       {
         name: 'ExportBlobContainerName'
         value: exportBlobContainerName
       }
       {
-        name: 'ExportBlobStorage'
-        value: extractorStorageAccountDeploy.outputs.primaryConnection
+        name: 'ExportBlobStorage__accountName'
+        value: extractorStorageAccountDeploy.outputs.resourceName
+      }
+      {
+        name: 'ConnectionStrings__SourceDb'
+        value: sqlConnection
       }
     ]
     location: location

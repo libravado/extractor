@@ -58,19 +58,19 @@ public class ExtractDocsFunction
         {
             var extension = Path.GetExtension(triggerFileName);
             retVal.RunConfig = runConfigParser.Parse(triggerFile, extension);
-            var documents = await claimDocumentRepo.GetClaimDocumentsAync(retVal.RunConfig);
+            var documents = await claimDocumentRepo.GetClaimDocumentsAsync(retVal.RunConfig);
             retVal.DocumentsFound = documents.Count;
             retVal.DocumentsFoundByClaimType = new()
             {
-                { ClaimType.Claim, documents.Count(d => d.ClaimType == ClaimType.Claim) },
                 { ClaimType.Continuation, documents.Count(d => d.ClaimType == ClaimType.Continuation) },
+                { ClaimType.Claim, documents.Count(d => d.ClaimType == ClaimType.Claim) },
             };
 
             retVal.FailedUris = new List<string>();
             retVal.DocumentsExportedByClaimType = new()
             {
-                { ClaimType.Claim, 0 },
                 { ClaimType.Continuation, 0 },
+                { ClaimType.Claim, 0},
             };
 
             foreach (var document in documents)
@@ -78,13 +78,14 @@ public class ExtractDocsFunction
                 try
                 {
                     await blobRepo.CopyDocumentAsync(document);
+                    Console.WriteLine("Copied blob " + document.BlobUri);
                     retVal.DocumentsExportedByClaimType[document.ClaimType]++;
                 }
                 catch (Exception ex)
                 {
-                    var message = "Failed to copy: " + document.BlobUri;
+                    var message = "Failed to copy blob " + document.BlobUri;
+                    Console.WriteLine("ERROR: " + message);
                     logger.LogError(ex, message);
-                    Console.WriteLine("ERROR:" + message);
                     retVal.FailedUris.Add(document.BlobUri);
                 }
             }

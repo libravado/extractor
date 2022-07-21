@@ -19,7 +19,7 @@ public class ClaimDocsEfRepo : IClaimDocsRepo
         this.sourceDb = sourceDb;
     }
 
-    public async Task<List<ClaimDocument>> GetClaimDocumentsAync(RunConfig runConfig)
+    public async Task<List<ClaimDocument>> GetClaimDocumentsAsync(RunConfig runConfig)
     {
         return new List<ClaimDocument>
         {

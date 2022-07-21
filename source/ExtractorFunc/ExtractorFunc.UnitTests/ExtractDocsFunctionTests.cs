@@ -43,7 +43,7 @@ namespace ExtractorFunc.Tests
             await sut.Run(null!, "file");
 
             // Assert
-            mocks.MockClaimDocsRepo.Verify(m => m.GetClaimDocumentsAync(mockConfig), Times.Once());
+            mocks.MockClaimDocsRepo.Verify(m => m.GetClaimDocumentsAsync(mockConfig), Times.Once());
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace ExtractorFunc.Tests
             var mockCount = 33;
             var sut = GetSut(out var mocks);
             mocks.MockClaimDocsRepo
-                .Setup(m => m.GetClaimDocumentsAync(It.IsAny<RunConfig>()))
+                .Setup(m => m.GetClaimDocumentsAsync(It.IsAny<RunConfig>()))
                 .ReturnsAsync(Enumerable.Range(0, mockCount).Select(i => mockDoc).ToList());
 
             // Act
@@ -70,7 +70,7 @@ namespace ExtractorFunc.Tests
             // Arrange
             var sut = GetSut(out var mocks);
             mocks.MockClaimDocsRepo
-                .Setup(m => m.GetClaimDocumentsAync(It.IsAny<RunConfig>()))
+                .Setup(m => m.GetClaimDocumentsAsync(It.IsAny<RunConfig>()))
                 .ReturnsAsync(new List<ClaimDocument>
                 {
                     new ClaimDocument(1, 1, ClaimType.Claim, DocumentType.Invoice, "blob1"),
@@ -119,7 +119,7 @@ namespace ExtractorFunc.Tests
             };
             var sut = GetSut(out var mocks);
             mocks.MockClaimDocsRepo
-                .Setup(m => m.GetClaimDocumentsAync(It.IsAny<RunConfig>()))
+                .Setup(m => m.GetClaimDocumentsAsync(It.IsAny<RunConfig>()))
                 .ReturnsAsync(mockQueryResults);
             mocks.MockDataExtractRepo
                 .Setup(m => m.CopyDocumentAsync(It.IsAny<ClaimDocument>()))
@@ -146,7 +146,7 @@ namespace ExtractorFunc.Tests
             // Arrange
             var sut = GetSut(out var mocks);
             mocks.MockClaimDocsRepo
-                .Setup(m => m.GetClaimDocumentsAync(It.IsAny<RunConfig>()))
+                .Setup(m => m.GetClaimDocumentsAsync(It.IsAny<RunConfig>()))
                 .ThrowsAsync(new Exception("fail"));
 
             RunResult actualRunResult = default!;

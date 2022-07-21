@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Azure.Identity;
 using Azure.Storage.Blobs;
 
 namespace ExtractorFunc.Services;
@@ -7,6 +8,25 @@ namespace ExtractorFunc.Services;
 /// <inheritdoc cref="IBlobClientService"/>
 public class BlobClientService : IBlobClientService
 {
+    private const string DevConnection = "UseDevelopmentStorage=true";
+    private const string AccountUrlFormat = "https://{0}.blob.core.windows.net";
+
+    /// <inheritdoc/>
+    public BlobServiceClient GetAccount(string? hostedAccountName)
+        => hostedAccountName == null
+            ? new(DevConnection)
+            : new(
+                new Uri(GetAccountUrl(hostedAccountName)),
+                new DefaultAzureCredential());
+
+    /// <inheritdoc/>
+    public BlobContainerClient GetContainer(string containerName, string? hostedAccountName)
+        => hostedAccountName == null
+            ? new(DevConnection, containerName)
+            : new(
+                new Uri(GetAccountUrl(hostedAccountName) + "/" + containerName),
+                new DefaultAzureCredential());
+
     /// <inheritdoc/>
     public async Task CopyBlobAsync(BlobClient source, BlobClient target)
     {
@@ -17,30 +37,14 @@ public class BlobClientService : IBlobClientService
 
         if (!await target.ExistsAsync())
         {
-            //var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
-
             using var sourceStream = source.OpenRead();
             await target.UploadAsync(sourceStream);
-
-            //var copyOperation = await target.StartCopyFromUriAsync(source.Uri);
-
-            //// Display the status of the blob as it is copied
-            //while (!copyOperation.HasCompleted)
-            //{
-            //    var copied = await copyOperation.WaitForCompletionAsync();
-            //    logger.LogDebug($"Blob: {target.Name}, Copied: {copied} of ???");
-            //    await Task.Delay(1000);
-            //}
-
-            Console.WriteLine($"Blob: {target.Name} Complete");
         }
     }
 
     /// <inheritdoc/>
     public void CreateIfNotExists(BlobContainerClient container)
-    {
-        container.CreateIfNotExists();
-    }
+        => container.CreateIfNotExists();
 
     /// <inheritdoc/>
     public BlobClient GetBlobClient(BlobServiceClient source, string uriString)
@@ -67,4 +71,7 @@ public class BlobClientService : IBlobClientService
         jsonStream.Seek(0, SeekOrigin.Begin);
         await container.UploadBlobAsync(path, jsonStream);
     }
+
+    private static string GetAccountUrl(string accountName)
+        => string.Format(AccountUrlFormat, accountName);
 }

@@ -1,7 +1,8 @@
 ﻿using Azure.Storage.Blobs;
-using Microsoft.Extensions.Configuration;
 using ExtractorFunc.Models;
 using ExtractorFunc.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace ExtractorFunc.Repos;
 
@@ -17,20 +18,22 @@ public class DataExtractRepo : IDataExtractRepo
     /// <summary>
     /// Initialises a new instance of the <see cref="DataExtractRepo"/> class.
     /// </summary>
+    /// <param name="env">The hosting environment.</param>
     /// <param name="config">The configuration.</param>
     /// <param name="blobClientService">The blob client service.</param>
     public DataExtractRepo(
+        IHostingEnvironment env,
         IConfiguration config,
         IBlobClientService blobClientService)
     {
         this.blobClientService = blobClientService;
 
-        sourceAccount = new BlobServiceClient(
-            config.GetConnectionString("SourceDocsBlobStorage"));
+        sourceAccount = this.blobClientService.GetAccount(
+            env.IsDevelopment() ? null : config["SourceDocsStorageAccountName"]);
 
-        exportContainer = new BlobContainerClient(
-            config["ExportBlobStorage"],
-            config["ExportBlobContainerName"]);
+        exportContainer = this.blobClientService.GetContainer(
+            config["ExportBlobContainerName"],
+            env.IsDevelopment() ? null : config["ExportBlobStorageAccountName"]);
 
         this.blobClientService.CreateIfNotExists(exportContainer);
     }
