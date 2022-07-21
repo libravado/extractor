@@ -33,20 +33,27 @@ public class BlobClientService : IBlobClientService
             try
             {
                 //var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
-                var copyOperation = await target.StartCopyFromUriAsync(source.Uri);
 
-                // Display the status of the blob as it is copied
-                while (!copyOperation.HasCompleted)
-                {
-                    var copied = await copyOperation.WaitForCompletionAsync();
-                    logger.LogDebug($"Blob: {target.Name}, Copied: {copied} of ???");
-                    await Task.Delay(1000);
-                }
+                using var sourceStream = source.OpenRead();
+                using var targetStream = target.OpenWrite(true);
+                sourceStream.CopyTo(targetStream);
+
+                //var copyOperation = await target.StartCopyFromUriAsync(source.Uri);
+
+                //// Display the status of the blob as it is copied
+                //while (!copyOperation.HasCompleted)
+                //{
+                //    var copied = await copyOperation.WaitForCompletionAsync();
+                //    logger.LogDebug($"Blob: {target.Name}, Copied: {copied} of ???");
+                //    await Task.Delay(1000);
+                //}
 
                 Console.WriteLine($"Blob: {target.Name} Complete");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Blob: {target.Name} Error: {ex.GetType().Name} - {ex.Message}");
+
                 throw new InvalidOperationException("Blob copy failed, dude", ex);
             }
         }
