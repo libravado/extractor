@@ -8,6 +8,12 @@ namespace ExtractorFunc.Services;
 public interface IBlobClientService
 {
     /// <summary>
+    /// Creates a container if it does not already exist.
+    /// </summary>
+    /// <param name="container">The container to ensure the existence of.</param>
+    public void CreateIfNotExists(BlobContainerClient container);
+
+    /// <summary>
     /// Copies a blob to another location. The blobs do not necessary have to be
     /// in the same container (or indeed the same account).
     /// </summary>

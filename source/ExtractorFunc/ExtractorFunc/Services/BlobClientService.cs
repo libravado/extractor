@@ -1,9 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Azure.Identity;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using Azure.Storage.Blobs.Specialized;
 
 namespace ExtractorFunc.Services;
 
@@ -29,6 +26,12 @@ public class BlobClientService : IBlobClientService
                 throw new InvalidOperationException("Blob copy failed, dude", ex);
             }
         }
+    }
+
+    /// <inheritdoc/>
+    public void CreateIfNotExists(BlobContainerClient container)
+    {
+        container.CreateIfNotExists();
     }
 
     /// <inheritdoc/>

@@ -1,6 +1,5 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using ExtractorFunc.Models;
 using ExtractorFunc.Repos;
 using ExtractorFunc.Services;

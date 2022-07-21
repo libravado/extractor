@@ -1,6 +1,5 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using ExtractorFunc.Models;
 using ExtractorFunc.Services;
 
@@ -33,7 +32,7 @@ public class DataExtractRepo : IDataExtractRepo
             config["ExportBlobStorage"],
             config["ExportBlobContainerName"]);
 
-        exportContainer.CreateIfNotExists();
+        this.blobClientService.CreateIfNotExists(exportContainer);
     }
 
     /// <inheritdoc/>

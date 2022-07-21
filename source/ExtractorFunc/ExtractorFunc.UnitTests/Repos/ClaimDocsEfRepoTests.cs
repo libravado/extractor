@@ -1,8 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ExtractorFunc.Models;
-using ExtractorFunc.Persistence;
-using ExtractorFunc.Persistence.Models;
-using ExtractorFunc.Repos;
+﻿using ExtractorFunc.Repos;
 
 namespace ExtractorFunc.Tests.Repos;
 

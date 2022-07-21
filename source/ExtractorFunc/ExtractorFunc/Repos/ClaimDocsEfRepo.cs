@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ExtractorFunc.Models;
+﻿using ExtractorFunc.Models;
 using ExtractorFunc.Persistence;
 
 namespace ExtractorFunc.Repos;

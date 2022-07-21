@@ -3,7 +3,6 @@
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using ExtractorFunc.Persistence.Models;
 
 namespace ExtractorFunc.Persistence
