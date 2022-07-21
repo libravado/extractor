@@ -86,6 +86,10 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
     shortName: 'func'
     appSettings: [
       {
+        name: 'AZURE_FUNCTIONS_ENVIRONMENT'
+        value: 'prod'
+      }
+      {
         name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
         value: appInsightsConnection
       }
