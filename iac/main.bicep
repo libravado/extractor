@@ -16,9 +16,6 @@ param appInsightsConnection string
 @description('Source storage account name.')
 param sourceDocsStorageAccountName string
 
-@description('The container name for export blobs.')
-param exportBlobContainerName string
-
 // -----------------------------------------------------------------------------
 // Variables
 // -----------------------------------------------------------------------------
@@ -36,6 +33,9 @@ var suffix = '${workload}-${locationShort}'
 
 @description('The resource tags.')
 var tags = resourceGroup().tags
+
+@description('The export container name.')
+var exportBlobContainerName = 'wns-data-extract-export'
 
 // -----------------------------------------------------------------------------
 // Resources
@@ -62,7 +62,7 @@ module extractorTriggerContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modu
 module extractorExportContainerDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/storage/storage-account-blob:v1' = {
   name: 'extractorExportContainerDeploy'
   params: {
-    containerName: 'wns-data-extract-export'
+    containerName: exportBlobContainerName
     publicAccess: false
     storageAccountResourceName: extractorStorageAccountDeploy.outputs.resourceName
   }
