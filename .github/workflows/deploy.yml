@@ -2,17 +2,9 @@ name: deploy
 on:
   workflow_call:
     inputs:
-      delivery:
-        description: Delivery ref no.
-        type: number
-        required: true
-      environment:
-        description: Environment prefix
-        type: string
-        required: true # OPTIONS: DEV
       ci_call:
         type: boolean
-        default: true
+        required: true
   workflow_dispatch:
     inputs:
       delivery:
@@ -22,7 +14,10 @@ on:
       environment:
         description: Environment prefix
         type: string
-        required: true # OPTIONS: TEST, UAT, PROD
+        required: true
+env:
+  ENV_PREFIX: ${{ inputs.ci_call != true && inputs.environment || secrets.AZURE_CI_PREFIX }}
+  MAP_NAME: ${{ inputs.ci_call != true && 'deployment_map' || 'deployment_map_ci' }}
 jobs:
   check_delivery:
     runs-on: ubuntu-latest
@@ -36,13 +31,13 @@ jobs:
         workflow: deliver.yml
         branch: main
         run_number: ${{ inputs.delivery }}
-        name: 'delivery-${{ inputs.delivery }}'
+        name: delivery
         path: deliverable
     - name: Re-up delivery from catalog -> current
       if: inputs.ci_call != true
       uses: actions/upload-artifact@v3
       with:
-        name: 'delivery-${{ inputs.delivery }}'
+        name: delivery
         path: deliverable
   deploy:
     needs: check_delivery
@@ -56,7 +51,7 @@ jobs:
     - name: Get deliverables
       uses: actions/download-artifact@v3
       with:
-        name: 'delivery-${{ inputs.delivery }}'
+        name: delivery
         path: deliverable
     - name: Extract archives 4 SHAs
       run: |
@@ -73,12 +68,12 @@ jobs:
         workflow: ${{ inputs.ci_call != true && 'deploy.yml' || 'deliver.yml' }}
         workflow_conclusion: success
         branch: main
-        name: ${{ inputs.ci_call != true && 'deployment_map' || 'deployment_map_ci' }}
+        name: ${{ env.MAP_NAME }}
         path: deployment_map
     - id: read_map
       name: Read map
       run: |
-        map="{ ${{ inputs.environment }}: { } }"
+        map="{ ${{ env.ENV_PREFIX }}: { } }"
         if [ '${{ steps.get_map.outcome }}' == 'success' ]; then
           map=$(<deployment_map/deployment_map.json)
         fi
@@ -87,38 +82,38 @@ jobs:
     # Deploy iac/bicep
     - name: Deployable iac/bicep - check for changes
       run: |
-        echo "oldsha: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep }}"
+        echo "oldsha: ${{ fromJson(steps.read_map.outputs.map)[env.ENV_PREFIX].iac_bicep }}"
         echo "newsha: ${{ env.SHA_IAC_BICEP }}"
     - name: Deployable iac/bicep - deploy (if changed)
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].iac_bicep != env.SHA_IAC_BICEP
+      if: fromJson(steps.read_map.outputs.map)[env.ENV_PREFIX].iac_bicep != env.SHA_IAC_BICEP
       uses: azure/arm-deploy@v1
       with:
         subscriptionId: ${{ secrets.AZURE_SUB_ID }}
-        resourceGroupName: ${{ inputs.environment }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
+        resourceGroupName: ${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
         template: extract/iac/bicep/main.bicep
         parameters:
           sqlConnection=blort-sql
           appInsightsConnection=${{ secrets.AZURE_INSIGHTS }}
-          sourceDocsStorageAccountName=${{ inputs.environment }}stgsharedweu
-          exportBlobStorageAccountName=${{ inputs.environment }}stgsharedweu
-          exportBlobContainerName=export
+          sourceDocsStorageAccountName=${{ env.ENV_PREFIX }}stgsharedweu
+          exportBlobStorageAccountName=${{ env.ENV_PREFIX }}stg${{ secrets.AZURE_WORKLOAD }}weu
+          exportBlobContainerName=wns-data-extract-export
 
     # Deploy source/extractor
     - name: Deployable source/extractor - check for changes
       run: |
-        echo "oldsha: ${{ fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor }}"
+        echo "oldsha: ${{ fromJson(steps.read_map.outputs.map)[env.ENV_PREFIX].src_extractor }}"
         echo "newsha: ${{ env.SHA_SRC_EXTRACTOR }}"
     - name: Deployable source/extractor - get publish profile (if changed)
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor != env.SHA_SRC_EXTRACTOR
+      if: fromJson(steps.read_map.outputs.map)[env.ENV_PREFIX].src_extractor != env.SHA_SRC_EXTRACTOR
       run: |
-        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g "${{ inputs.environment }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" -n "${{ inputs.environment }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
+        pubProfileXml=$(az functionapp deployment list-publishing-profiles -g ${{ env.ENV_PREFIX }}-rg-${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }} -n "${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}" --xml)
         echo "::add-mask::$pubProfileXml"
         echo PUB_PROFILE_XML=$pubProfileXml >> $GITHUB_ENV
     - name: Deployable source/extractor - publish (if changed)
-      if: fromJson(steps.read_map.outputs.map)[inputs.environment].src_extractor != env.SHA_SRC_EXTRACTOR
+      if: fromJson(steps.read_map.outputs.map)[env.ENV_PREFIX].src_extractor != env.SHA_SRC_EXTRACTOR
       uses: Azure/functions-action@v1
       with:
-        app-name: ${{ inputs.environment }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
+        app-name: ${{ env.ENV_PREFIX }}-app-func${{ secrets.AZURE_WORKLOAD }}-${{ secrets.AZURE_RG_LOC }}
         package: extract/source/extractor
         publish-profile: ${{ env.PUB_PROFILE_XML }}
 
@@ -127,7 +122,7 @@ jobs:
       with:
         script: |
           const fs = require('fs');
-          const merged = { ...${{ steps.read_map.outputs.map }}, ${{ inputs.environment }}: {
+          const merged = { ...${{ steps.read_map.outputs.map }}, ${{ env.ENV_PREFIX }}: {
             'iac_bicep': '${{ env.SHA_IAC_BICEP }}',
             'src_extractor': '${{ env.SHA_SRC_EXTRACTOR }}'
           }};
@@ -135,5 +130,5 @@ jobs:
     - name: Upload deployment map
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.ci_call != true && 'deployment_map' || 'deployment_map_ci' }}
+        name: ${{ env.MAP_NAME }}
         path: deployment_map.json 

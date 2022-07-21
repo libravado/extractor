@@ -30,6 +30,7 @@ $engAdId=az ad group create --display-name engineers --mail-nickname engineers -
 $appiConnection=az resource show -g "$($cloudenv)-rg-shared-weu" -n "$($cloudenv)-appi-shared-weu" --resource-type "microsoft.insights/components" --query properties.ConnectionString -o tsv; `
 
 echo "--------------------------------------------------------------------------------"; `
+echo "AZURE_CI_PREFIX:  dev"; `
 echo "AZURE_WORKLOAD:   $workload"; `
 echo "AZURE_RG_LOC:     $locationShort"; `
 echo "AZURE_ENG_ID:     $engAdId"; `

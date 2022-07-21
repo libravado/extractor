@@ -28,12 +28,11 @@ jobs:
     - name: Upload deliverables
       uses: actions/upload-artifact@v3
       with:
-        name: 'delivery-${{ github.run_number }}'
+        name: delivery
         path: ${{ github.workspace }}/drop/deliverable
   call_deploy:
     needs: deliver
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
     with:
-      delivery: ${{ fromJson(github.run_number) }}
-      environment: dev
+      ci_call: true

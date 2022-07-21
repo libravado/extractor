@@ -20,19 +20,13 @@ public class BlobClientService : IBlobClientService
 
         if (!await target.ExistsAsync())
         {
-            var lease = source.GetBlobLeaseClient();
             try
             {
-                await lease.AcquireAsync(TimeSpan.FromSeconds(-1));
                 await target.StartCopyFromUriAsync(source.Uri);
             }
-            finally
+            catch (Exception ex)
             {
-                BlobProperties sourceProperties = await source.GetPropertiesAsync();
-                if (sourceProperties.LeaseState == LeaseState.Leased)
-                {
-                    await lease.BreakAsync();
-                }
+                throw new InvalidOperationException("Blob copy failed, dude", ex);
             }
         }
     }
