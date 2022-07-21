@@ -32,8 +32,8 @@ public class BlobClientService : IBlobClientService
         {
             try
             {
-                var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
-                var copyOperation = await target.StartCopyFromUriAsync(sasUri);
+                //var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
+                var copyOperation = await target.StartCopyFromUriAsync(source.Uri);
 
                 // Display the status of the blob as it is copied
                 while (!copyOperation.HasCompleted)
