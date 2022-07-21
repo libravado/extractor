@@ -7,7 +7,7 @@ namespace ExtractorFunc.Repos;
 /// <inheritdoc cref="IClaimDocsRepo"/>
 public class ClaimDocsEfRepo : IClaimDocsRepo
 {
-    private static readonly List<int> ClaimTypes = new(new[] { (int)ClaimType.Claim, (int)ClaimType.PreAuth });
+    private static readonly List<int> ClaimTypes = new(new[] { (int)ClaimType.Claim, (int)ClaimType.Continuation });
 
     private readonly SourceDbContext sourceDb;
 

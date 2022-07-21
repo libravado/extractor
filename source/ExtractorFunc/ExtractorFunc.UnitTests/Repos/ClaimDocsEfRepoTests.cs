@@ -128,10 +128,10 @@ public class ClaimDocsEfRepoTests
     }
 
     [Fact]
-    public async Task GetClaimDocuments_WithWidestCriteria_OmitsContinuations()
+    public async Task GetClaimDocuments_WithWidestCriteria_OmitsPreAuths()
     {
         // Arrange
-        var db = GetInMemDb(null, BuildDocumentRecord(claimType: ClaimType.Continuation));
+        var db = GetInMemDb(null, BuildDocumentRecord(claimType: ClaimType.PreAuth));
         var sut = new ClaimDocsEfRepo(db);
         var config = new RunConfig(DateTime.MinValue, DateTime.MaxValue, null);
 
@@ -146,7 +146,7 @@ public class ClaimDocsEfRepoTests
     public async Task GetClaimDocuments_WithMatch_ReturnsFullExpectedData()
     {
         // Arrange
-        var record = BuildDocumentRecord(123, DateTime.Today, ClaimType.PreAuth, DocumentType.Invoice);
+        var record = BuildDocumentRecord(123, DateTime.Today, ClaimType.Continuation, DocumentType.Invoice);
         var db = GetInMemDb(null, record);
         var sut = new ClaimDocsEfRepo(db);
         var config = new RunConfig(DateTime.MinValue, DateTime.MaxValue, null);

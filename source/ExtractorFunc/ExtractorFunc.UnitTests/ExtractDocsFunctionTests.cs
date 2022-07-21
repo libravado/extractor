@@ -73,7 +73,7 @@ namespace ExtractorFunc.Tests
                 .ReturnsAsync(new List<ClaimDocument>
                 {
                     new ClaimDocument(1, 1, ClaimType.Claim, DocumentType.Invoice, "blob1"),
-                    new ClaimDocument(2, 2, ClaimType.PreAuth, DocumentType.MedicalHistory, "blob2"),
+                    new ClaimDocument(2, 2, ClaimType.Continuation, DocumentType.MedicalHistory, "blob2"),
                     new ClaimDocument(3, 3, ClaimType.Claim, DocumentType.MedicalHistory, "blob3"),
                 });
 
@@ -89,13 +89,13 @@ namespace ExtractorFunc.Tests
                 DocumentsFound = 3,
                 DocumentsFoundByClaimType = new()
                 {
-                    { ClaimType.PreAuth, 1 },
                     { ClaimType.Claim, 2 },
+                    { ClaimType.Continuation, 1 },
                 },
                 DocumentsExportedByClaimType = new()
                 {
-                    { ClaimType.PreAuth, 1 },
                     { ClaimType.Claim, 2 },
+                    { ClaimType.Continuation, 1 },
                 },
             };
 

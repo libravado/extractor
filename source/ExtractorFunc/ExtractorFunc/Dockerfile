@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
-ARG PROJECT_PATH=ExtractorFunc/
+ARG PROJECT_PATH=FunctionApps/ExtractorFunc/
 ARG PROJECT=ExtractorFunc.csproj
 
 # Install Credential Provider

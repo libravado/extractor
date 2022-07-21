@@ -1,12 +1,13 @@
 {
   "IsEncrypted": false,
-  "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-    "ExportBlobContainerName": "export",
-    "TriggerBlobStorage": "UseDevelopmentStorage=true"
-  },
   "ConnectionStrings": {
-    "SourceDb": "???"
+    "SourceDb": "Data Source=localhost;Initial Catalog=libravado;Integrated Security=True;",
+    "SourceDocsBlobStorage": "UseDevelopmentStorage=true"
+  },
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "ExportBlobStorage": "UseDevelopmentStorage=true",
+    "ExportBlobContainerName": "export"
   }
 }

@@ -39,7 +39,7 @@ public class ExtractDocsFunction
     /// <param name="triggerFileName">The trigger file name.</param>
     [FunctionName("ExtractDocs")]
     public async Task Run(
-        [BlobTrigger($"{TriggerContainerName}/{{triggerFileName}}", Connection = "TriggerBlobStorage")] Stream triggerFile,
+        [BlobTrigger($"{TriggerContainerName}/{{triggerFileName}}", Connection = "ExportBlobStorage")] Stream triggerFile,
         string triggerFileName)
     {
         var results = await RunInternalAsync(triggerFile, triggerFileName);
@@ -57,15 +57,15 @@ public class ExtractDocsFunction
             retVal.DocumentsFound = documents.Count;
             retVal.DocumentsFoundByClaimType = new()
             {
-                { ClaimType.PreAuth, documents.Count(d => d.ClaimType == ClaimType.PreAuth) },
                 { ClaimType.Claim, documents.Count(d => d.ClaimType == ClaimType.Claim) },
+                { ClaimType.Continuation, documents.Count(d => d.ClaimType == ClaimType.Continuation) },
             };
 
             retVal.FailedUris = new List<string>();
             retVal.DocumentsExportedByClaimType = new()
             {
-                { ClaimType.PreAuth, 0 },
-                { ClaimType.Claim, 0},
+                { ClaimType.Claim, 0 },
+                { ClaimType.Continuation, 0 },
             };
 
             foreach (var document in documents)

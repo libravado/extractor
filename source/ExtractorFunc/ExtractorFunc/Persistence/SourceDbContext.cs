@@ -1,7 +1,7 @@
 ﻿#pragma warning disable 1591
 
-using System;
-using System.Collections.Generic;
+using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using ExtractorFunc.Persistence.Models;
@@ -17,6 +17,15 @@ namespace ExtractorFunc.Persistence
         public SourceDbContext(DbContextOptions<SourceDbContext> options)
             : base(options)
         {
+            if (Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+            {
+                var connection = (SqlConnection)Database.GetDbConnection();
+
+                if (connection.ConnectionString.Contains("database.windows.net", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    connection.AccessToken = new AzureServiceTokenProvider().GetAccessTokenAsync("https://database.windows.net/").Result;
+                }
+            }
         }
 
         public virtual DbSet<Claim> Claims { get; set; } = null!;

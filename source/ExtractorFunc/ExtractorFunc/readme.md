@@ -49,10 +49,9 @@ Note the following (present in Configuration section for the hosted function app
 
 |Key|Description|
 |-|-|
-|`TriggerBlobStorage__accountName`|The name of the storage account for triggering. The function must be able to read blobs in this account.|
-|`SourceDocsStorageAccountName`|The name of the storage account where Pawtal docs live. The function must be able to read blobs in this account.|
-|`ExportBlobStorageAccountName`|The name of the storage account for exporting data. The function must be able to write blobs to this account.|
+|`ExportBlobStorage`|Connection string to the storage account for trigger blobs and export data alike. The function must be able to read blobs in this account.|
 |`ExportBlobContainerName`|The name of the container within the "Export Blob Storage Account" to which to export data.|
+|`ConnectionStrings__SourceDocsStorage`|Connection string to storage account where Pawtal docs live. The function must be able to read blobs in this account.|
 |`ConnectionStrings__SourceDb`|Connection to Pawtal db.|
 |`APPLICATIONINSIGHTS_CONNECTION_STRING`|Connection to App Insights.|
 

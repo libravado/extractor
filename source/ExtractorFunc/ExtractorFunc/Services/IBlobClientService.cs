@@ -8,23 +8,6 @@ namespace ExtractorFunc.Services;
 public interface IBlobClientService
 {
     /// <summary>
-    /// Gets a storage account client.
-    /// </summary>
-    /// <param name="hostedAccountName">The account name (if hosted). If null, a
-    /// client for local emulation is returned.</param>
-    /// <returns>A storage account client.</returns>
-    public BlobServiceClient GetAccount(string? hostedAccountName);
-
-    /// <summary>
-    /// Gets a storage account container client.
-    /// </summary>
-    /// <param name="containerName">The container name.</param>
-    /// <param name="hostedAccountName">The account name (if hosted). If null, a
-    /// client for local emulation is returned.</param>
-    /// <returns>A storage account container client.</returns>
-    public BlobContainerClient GetContainer(string containerName, string? hostedAccountName);
-
-    /// <summary>
     /// Copies a blob to another location. The blobs do not necessary have to be
     /// in the same container (or indeed the same account).
     /// </summary>
@@ -32,12 +15,6 @@ public interface IBlobClientService
     /// <param name="target">The target blob.</param>
     /// <exception cref="ArgumentException">Source blob not found.</exception>
     public Task CopyBlobAsync(BlobClient source, BlobClient target);
-
-    /// <summary>
-    /// Creates a container if it does not already exist.
-    /// </summary>
-    /// <param name="container">The container to ensure the existence of.</param>
-    public void CreateIfNotExists(BlobContainerClient container);
 
     /// <summary>
     /// Gets a blob client for the specified container based on the blob uri.
