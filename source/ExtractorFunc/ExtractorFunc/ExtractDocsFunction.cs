@@ -2,6 +2,7 @@ using ExtractorFunc.Models;
 using ExtractorFunc.Repos;
 using ExtractorFunc.Services;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc;
 
@@ -15,6 +16,7 @@ public class ExtractDocsFunction
     private readonly IDataExtractRepo blobRepo;
     private readonly IClaimDocsRepo claimDocumentRepo;
     private readonly IRunConfigParser runConfigParser;
+    private readonly ILogger<ExtractDocsFunction> logger;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="ExtractDocsFunction"/> class.
@@ -22,14 +24,17 @@ public class ExtractDocsFunction
     /// <param name="blobRepo">The blob repo.</param>
     /// <param name="claimDocumentRepo">The claim document repo.</param>
     /// <param name="runConfigParser">The run config file parser.</param>
+    /// <param name="logger">The logger.</param>
     public ExtractDocsFunction(
         IDataExtractRepo blobRepo,
         IClaimDocsRepo claimDocumentRepo,
-        IRunConfigParser runConfigParser)
+        IRunConfigParser runConfigParser,
+        ILogger<ExtractDocsFunction> logger)
     {
         this.blobRepo = blobRepo;
         this.claimDocumentRepo = claimDocumentRepo;
         this.runConfigParser = runConfigParser;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -75,8 +80,11 @@ public class ExtractDocsFunction
                     await blobRepo.CopyDocumentAsync(document);
                     retVal.DocumentsExportedByClaimType[document.ClaimType]++;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    var message = "Failed to copy: " + document.BlobUri;
+                    logger.LogError(ex, message);
+                    Console.WriteLine("ERROR:" + message);
                     retVal.FailedUris.Add(document.BlobUri);
                 }
             }

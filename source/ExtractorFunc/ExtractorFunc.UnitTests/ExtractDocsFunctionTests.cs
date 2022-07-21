@@ -1,6 +1,7 @@
 using ExtractorFunc.Models;
 using ExtractorFunc.Repos;
 using ExtractorFunc.Services;
+using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc.Tests
 {
@@ -190,17 +191,20 @@ namespace ExtractorFunc.Tests
             mocks = new BagOfMocks(
                 new Mock<IDataExtractRepo>(),
                 new Mock<IClaimDocsRepo>(),
-                new Mock<IRunConfigParser>());
+                new Mock<IRunConfigParser>(),
+                new Mock<ILogger<ExtractDocsFunction>>());
 
             return new ExtractDocsFunction(
                 mocks.MockDataExtractRepo.Object,
                 mocks.MockClaimDocsRepo.Object,
-                mocks.MockRunConfigParser.Object);
+                mocks.MockRunConfigParser.Object,
+                mocks.MockLogger.Object);
         }
 
         private record BagOfMocks(
             Mock<IDataExtractRepo> MockDataExtractRepo,
             Mock<IClaimDocsRepo> MockClaimDocsRepo,
-            Mock<IRunConfigParser> MockRunConfigParser);
+            Mock<IRunConfigParser> MockRunConfigParser,
+            Mock<ILogger<ExtractDocsFunction>> MockLogger);
     }
 }

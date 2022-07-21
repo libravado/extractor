@@ -1,25 +1,12 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Storage.Blobs;
-using Azure.Storage.Sas;
-using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc.Services;
 
 /// <inheritdoc cref="IBlobClientService"/>
 public class BlobClientService : IBlobClientService
 {
-    private readonly ILogger<BlobClientService> logger;
-
-    /// <summary>
-    /// Initialises a new instance of the <see cref="BlobClientService"/> class.
-    /// </summary>
-    /// <param name="logger">The logger.</param>
-    public BlobClientService(ILogger<BlobClientService> logger)
-    {
-        this.logger = logger;
-    }
-
     /// <inheritdoc/>
     public async Task CopyBlobAsync(BlobClient source, BlobClient target)
     {
@@ -30,32 +17,23 @@ public class BlobClientService : IBlobClientService
 
         if (!await target.ExistsAsync())
         {
-            try
-            {
-                //var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
+            //var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
 
-                using var sourceStream = source.OpenRead();
-                using var targetStream = target.OpenWrite(true);
-                sourceStream.CopyTo(targetStream);
+            using var sourceStream = source.OpenRead();
+            using var targetStream = target.OpenWrite(true);
+            sourceStream.CopyTo(targetStream);
 
-                //var copyOperation = await target.StartCopyFromUriAsync(source.Uri);
+            //var copyOperation = await target.StartCopyFromUriAsync(source.Uri);
 
-                //// Display the status of the blob as it is copied
-                //while (!copyOperation.HasCompleted)
-                //{
-                //    var copied = await copyOperation.WaitForCompletionAsync();
-                //    logger.LogDebug($"Blob: {target.Name}, Copied: {copied} of ???");
-                //    await Task.Delay(1000);
-                //}
+            //// Display the status of the blob as it is copied
+            //while (!copyOperation.HasCompleted)
+            //{
+            //    var copied = await copyOperation.WaitForCompletionAsync();
+            //    logger.LogDebug($"Blob: {target.Name}, Copied: {copied} of ???");
+            //    await Task.Delay(1000);
+            //}
 
-                Console.WriteLine($"Blob: {target.Name} Complete");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Blob: {target.Name} Error: {ex.GetType().Name} - {ex.Message}");
-
-                throw new InvalidOperationException("Blob copy failed, dude", ex);
-            }
+            Console.WriteLine($"Blob: {target.Name} Complete");
         }
     }
 
