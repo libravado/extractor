@@ -1,12 +1,25 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Storage.Blobs;
+using Azure.Storage.Sas;
+using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc.Services;
 
 /// <inheritdoc cref="IBlobClientService"/>
 public class BlobClientService : IBlobClientService
 {
+    private readonly ILogger<BlobClientService> logger;
+
+    /// <summary>
+    /// Initialises a new instance of the <see cref="BlobClientService"/> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    public BlobClientService(ILogger<BlobClientService> logger)
+    {
+        this.logger = logger;
+    }
+
     /// <inheritdoc/>
     public async Task CopyBlobAsync(BlobClient source, BlobClient target)
     {
@@ -19,7 +32,18 @@ public class BlobClientService : IBlobClientService
         {
             try
             {
-                await target.StartCopyFromUriAsync(source.Uri);
+                var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
+                var copyOperation = await target.StartCopyFromUriAsync(sasUri);
+
+                // Display the status of the blob as it is copied
+                while (!copyOperation.HasCompleted)
+                {
+                    var copied = await copyOperation.WaitForCompletionAsync();
+                    logger.LogDebug($"Blob: {target.Name}, Copied: {copied} of ???");
+                    await Task.Delay(1000);
+                }
+
+                Console.WriteLine($"Blob: {target.Name} Complete");
             }
             catch (Exception ex)
             {
