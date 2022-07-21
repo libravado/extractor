@@ -20,8 +20,7 @@ public class BlobClientService : IBlobClientService
             //var sasUri = source.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(60));
 
             using var sourceStream = source.OpenRead();
-            using var targetStream = target.OpenWrite(true);
-            sourceStream.CopyTo(targetStream);
+            await target.UploadAsync(sourceStream);
 
             //var copyOperation = await target.StartCopyFromUriAsync(source.Uri);
 
