@@ -33,7 +33,7 @@ public class DataExtractRepo : IDataExtractRepo
 
         exportContainer = this.blobClientService.GetContainer(
             config["ExportBlobContainerName"],
-            env.IsDevelopment() ? null : config["ExportBlobStorageAccountName"]);
+            env.IsDevelopment() ? null : config["ExportBlobStorage__accountName"]);
 
         this.blobClientService.CreateIfNotExists(exportContainer);
     }
