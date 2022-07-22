@@ -3,6 +3,7 @@ using ExtractorFunc.Models;
 using ExtractorFunc.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc.Repos;
 
@@ -14,6 +15,7 @@ public class DataExtractRepo : IDataExtractRepo
     private readonly BlobServiceClient sourceAccount;
     private readonly BlobContainerClient exportContainer;
     private readonly IBlobClientService blobClientService;
+    private readonly ILogger<DataExtractRepo> logger;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="DataExtractRepo"/> class.
@@ -21,12 +23,15 @@ public class DataExtractRepo : IDataExtractRepo
     /// <param name="env">The hosting environment.</param>
     /// <param name="config">The configuration.</param>
     /// <param name="blobClientService">The blob client service.</param>
+    /// <param name="logger">The logger.</param>
     public DataExtractRepo(
         IHostingEnvironment env,
         IConfiguration config,
-        IBlobClientService blobClientService)
+        IBlobClientService blobClientService,
+        ILogger<DataExtractRepo> logger)
     {
         this.blobClientService = blobClientService;
+        this.logger = logger;
 
         sourceAccount = this.blobClientService.GetAccount(
             env.IsDevelopment() ? null : config["SourceDocsStorageAccountName"]);
@@ -34,6 +39,10 @@ public class DataExtractRepo : IDataExtractRepo
         exportContainer = this.blobClientService.GetContainer(
             config["ExportBlobContainerName"],
             env.IsDevelopment() ? null : config["ExportBlobStorage__accountName"]);
+
+        var msg = "ContainerUri: " + exportContainer.Uri.ToString() + ", ExportSA: " + config["ExportBlobStorage__accountName"];
+        this.logger.LogInformation(msg);
+        Console.WriteLine("INFO: " + msg);
 
         this.blobClientService.CreateIfNotExists(exportContainer);
     }

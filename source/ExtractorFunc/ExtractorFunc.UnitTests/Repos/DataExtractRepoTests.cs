@@ -4,6 +4,7 @@ using ExtractorFunc.Models;
 using ExtractorFunc.Repos;
 using ExtractorFunc.Services;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc.Tests.Repos;
 
@@ -99,12 +100,14 @@ public class DataExtractRepoTests
         var mockEnv = new Mock<IHostingEnvironment>();
         mockEnv.Setup(m => m.EnvironmentName).Returns("Development");
 
+        var mockLogger = new Mock<ILogger<DataExtractRepo>>();
+
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 { "ExportBlobContainerName", exportContainerName },
             }).Build();
 
-        return new DataExtractRepo(mockEnv.Object, config, mockService.Object);
+        return new DataExtractRepo(mockEnv.Object, config, mockService.Object, mockLogger.Object);
     }
 }

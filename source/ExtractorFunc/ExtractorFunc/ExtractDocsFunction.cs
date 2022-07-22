@@ -16,7 +16,6 @@ public class ExtractDocsFunction
     private readonly IDataExtractRepo blobRepo;
     private readonly IClaimDocsRepo claimDocumentRepo;
     private readonly IRunConfigParser runConfigParser;
-    private readonly ILogger<ExtractDocsFunction> logger;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="ExtractDocsFunction"/> class.
@@ -24,17 +23,14 @@ public class ExtractDocsFunction
     /// <param name="blobRepo">The blob repo.</param>
     /// <param name="claimDocumentRepo">The claim document repo.</param>
     /// <param name="runConfigParser">The run config file parser.</param>
-    /// <param name="logger">The logger.</param>
     public ExtractDocsFunction(
         IDataExtractRepo blobRepo,
         IClaimDocsRepo claimDocumentRepo,
-        IRunConfigParser runConfigParser,
-        ILogger<ExtractDocsFunction> logger)
+        IRunConfigParser runConfigParser)
     {
         this.blobRepo = blobRepo;
         this.claimDocumentRepo = claimDocumentRepo;
         this.runConfigParser = runConfigParser;
-        this.logger = logger;
     }
 
     /// <summary>
@@ -42,16 +38,21 @@ public class ExtractDocsFunction
     /// </summary>
     /// <param name="triggerFile">The trigger payload.</param>
     /// <param name="triggerFileName">The trigger file name.</param>
+    /// <param name="logger">The logger.</param>
     [FunctionName("ExtractDocs")]
     public async Task Run(
         [BlobTrigger($"{TriggerContainerName}/{{triggerFileName}}", Connection = "ExportBlobStorage")] Stream triggerFile,
-        string triggerFileName)
+        string triggerFileName,
+        ILogger logger)
     {
-        var results = await RunInternalAsync(triggerFile, triggerFileName);
+        logger.LogInformation("Function start!!!");
+        Console.WriteLine("INFO: Start!!!");
+
+        var results = await RunInternalAsync(triggerFile, triggerFileName, logger);
         await blobRepo.UploadResultsAsync(results);
     }
 
-    private async Task<RunResult> RunInternalAsync(Stream triggerFile, string triggerFileName)
+    private async Task<RunResult> RunInternalAsync(Stream triggerFile, string triggerFileName, ILogger logger)
     {
         var retVal = new RunResult();
         try

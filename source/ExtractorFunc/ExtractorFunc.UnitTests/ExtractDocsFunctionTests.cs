@@ -23,7 +23,7 @@ namespace ExtractorFunc.Tests
             var sut = GetSut(out var mocks);
 
             // Act
-            await sut.Run(null!, fileName);
+            await sut.Run(null!, fileName, mocks.MockLogger.Object);
 
             // Assert
             mocks.MockRunConfigParser.Verify(m => m.Parse(null!, ext), Times.Once());
@@ -40,7 +40,7 @@ namespace ExtractorFunc.Tests
                 .Returns(mockConfig);
 
             // Act
-            await sut.Run(null!, "file");
+            await sut.Run(null!, "file", mocks.MockLogger.Object);
 
             // Assert
             mocks.MockClaimDocsRepo.Verify(m => m.GetClaimDocumentsAsync(mockConfig), Times.Once());
@@ -58,7 +58,7 @@ namespace ExtractorFunc.Tests
                 .ReturnsAsync(Enumerable.Range(0, mockCount).Select(i => mockDoc).ToList());
 
             // Act
-            await sut.Run(null!, "file");
+            await sut.Run(null!, "file", mocks.MockLogger.Object);
 
             // Assert
             mocks.MockDataExtractRepo.Verify(m => m.CopyDocumentAsync(It.IsAny<ClaimDocument>()), Times.Exactly(mockCount));
@@ -101,7 +101,7 @@ namespace ExtractorFunc.Tests
             };
 
             // Act
-            await sut.Run(null!, "file");
+            await sut.Run(null!, "file", mocks.MockLogger.Object);
 
             // Assert
             mocks.MockDataExtractRepo.Verify(m => m.UploadResultsAsync(It.IsAny<RunResult>()), Times.Once());
@@ -131,7 +131,7 @@ namespace ExtractorFunc.Tests
                 .Callback<RunResult>(r => actualRunResult = r);
 
             // Act
-            await sut.Run(null!, "file");
+            await sut.Run(null!, "file", mocks.MockLogger.Object);
 
             // Assert
             mocks.MockDataExtractRepo.Verify(m => m.UploadResultsAsync(It.IsAny<RunResult>()), Times.Once());
@@ -155,7 +155,7 @@ namespace ExtractorFunc.Tests
                 .Callback<RunResult>(r => actualRunResult = r);
 
             // Act
-            await sut.Run(null!, "file");
+            await sut.Run(null!, "file", mocks.MockLogger.Object);
 
             // Assert
             mocks.MockDataExtractRepo.Verify(m => m.UploadResultsAsync(It.IsAny<RunResult>()), Times.Once());
@@ -178,7 +178,7 @@ namespace ExtractorFunc.Tests
                 .Callback<RunResult>(r => actualRunResult = r);
 
             // Act
-            await sut.Run(null!, "file");
+            await sut.Run(null!, "file", new Mock<ILogger<ExtractDocsFunction>>().Object);
 
             // Assert
             mocks.MockDataExtractRepo.Verify(m => m.UploadResultsAsync(It.IsAny<RunResult>()), Times.Once());
@@ -192,19 +192,18 @@ namespace ExtractorFunc.Tests
                 new Mock<IDataExtractRepo>(),
                 new Mock<IClaimDocsRepo>(),
                 new Mock<IRunConfigParser>(),
-                new Mock<ILogger<ExtractDocsFunction>>());
+                new Mock<ILogger>());
 
             return new ExtractDocsFunction(
                 mocks.MockDataExtractRepo.Object,
                 mocks.MockClaimDocsRepo.Object,
-                mocks.MockRunConfigParser.Object,
-                mocks.MockLogger.Object);
+                mocks.MockRunConfigParser.Object);
         }
 
         private record BagOfMocks(
             Mock<IDataExtractRepo> MockDataExtractRepo,
             Mock<IClaimDocsRepo> MockClaimDocsRepo,
             Mock<IRunConfigParser> MockRunConfigParser,
-            Mock<ILogger<ExtractDocsFunction>> MockLogger);
+            Mock<ILogger> MockLogger);
     }
 }
