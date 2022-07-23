@@ -90,6 +90,14 @@ module functionAppDeploy 'br:devacrsharedweu.azurecr.io/bicep/modules/web/app-se
         value: 'prod'
       }
       {
+        name: 'ASPNETCORE_ENVIRONMENT'
+        value: 'prod'
+      }
+      {
+        name: 'DOTNET_ENVIRONMENT'
+        value: 'prod'
+      }
+      {
         name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
         value: appInsightsConnection
       }

@@ -3,8 +3,8 @@ using Microsoft.Extensions.Configuration;
 using ExtractorFunc.Models;
 using ExtractorFunc.Repos;
 using ExtractorFunc.Services;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
 
 namespace ExtractorFunc.Tests.Repos;
 

@@ -1,8 +1,8 @@
 ﻿using Azure.Storage.Blobs;
 using ExtractorFunc.Models;
 using ExtractorFunc.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace ExtractorFunc.Repos;
@@ -33,16 +33,16 @@ public class DataExtractRepo : IDataExtractRepo
         this.blobClientService = blobClientService;
         this.logger = logger;
 
+        var msg = "Env: " + env.EnvironmentName + ", IsDev?: " + env.IsDevelopment();
+        this.logger.LogInformation(msg);
+        Console.WriteLine("INFO: " + msg);
+
         sourceAccount = this.blobClientService.GetAccount(
             env.IsDevelopment() ? null : config["SourceDocsStorageAccountName"]);
 
         exportContainer = this.blobClientService.GetContainer(
             config["ExportBlobContainerName"],
             env.IsDevelopment() ? null : config["ExportBlobStorage__accountName"]);
-
-        var msg = "ContainerUri: " + exportContainer.Uri.ToString() + ", ExportSA: " + config["ExportBlobStorage__accountName"];
-        this.logger.LogInformation(msg);
-        Console.WriteLine("INFO: " + msg);
 
         this.blobClientService.CreateIfNotExists(exportContainer);
     }
